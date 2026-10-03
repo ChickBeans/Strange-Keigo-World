@@ -181,8 +181,8 @@ const portrait=()=>innerWidth<innerHeight;
 function resize(){
   const w=innerWidth,h=innerHeight; renderer.setSize(w,h);
   camera.aspect=w/h; camera.fov=portrait()?62:42;
-  // 下の選択パネルの分だけ、被写体を画面の上寄りに置く
-  camera.setViewOffset(w,h,0,h*(portrait()?0.17:0.12),w,h);
+  // 被写体は画面の中央より少し下に置き、頭の上の吹き出しが見切れないようにする（下の選択パネルとは重なってよい）
+  camera.setViewOffset(w,h,0,h*(portrait()?-0.06:0.02),w,h);
   camera.updateProjectionMatrix();
 }
 addEventListener('resize',resize); resize();
@@ -521,6 +521,9 @@ function placeTags(){
     let x,y;
     if(pip&&p===pip.actor){ v3.y-=0.2; v3.project(cam2); x=r.x+(v3.x+1)/2*r.w; y=r.y+(1-v3.y)/2*r.h; y=Math.max(y,r.y+r.h*0.35); x=Math.min(x,innerWidth-120); }
     else { v3.project(camera); if(v3.z>1){ el.style.display='none'; continue; } x=(v3.x+1)/2*innerWidth; y=(1-v3.y)/2*innerHeight; }
+    // 吹き出しが画面の上端（HUDの下）や左右からはみ出さないように押し戻す
+    if(!(pip&&p===pip.actor)){ const bw=el.offsetWidth, bh=el.offsetHeight;
+      x=Math.min(Math.max(x,bw/2+8),innerWidth-bw/2-8); y=Math.max(y,58+bh); }
     el.style.display=''; el.style.left=x+'px'; el.style.top=y+'px';
   }
 }
