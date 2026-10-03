@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>企業訪問シミュレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+/* 全画面の3Dステージ＋下から出る選択パネル。単一の明るい世界観（テーマ切替なし） */
+:root{
+  --sky:#cfe6f2; --ink:#2d2a3e; --muted:#6f6a80; --paper:#fffaf2; --line:#eadfcd;
+  --accent:#ff7a59; --accent-ink:#ffffff; --ok:#1f9d63; --ok-bg:#e3f6ec; --ng:#e0484e; --ng-bg:#fde8e8;
+  --font:"M PLUS Rounded 1c",system-ui,-apple-system,"Hiragino Maru Gothic ProN",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--sky);color:var(--ink);font-family:var(--font)}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#stage{position:fixed;inset:0}
+#stage canvas{display:block;width:100%;height:100%}
+#overlay{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+
+.hud{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;gap:8px;align-items:center;pointer-events:none}
+.pill{pointer-events:auto;background:var(--paper);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px;box-shadow:0 2px 0 rgba(0,0,0,.08);white-space:nowrap}
+.meter{flex:1;max-width:260px;margin-left:auto;background:var(--paper);border-radius:999px;padding:5px 10px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.meter .bar{flex:1;height:10px;border-radius:99px;background:#efe6d6;overflow:hidden}
+.meter .bar i{display:block;height:100%;width:50%;background:linear-gradient(90deg,#ffb35c,var(--accent));border-radius:99px;transition:width .5s}
+.iconbtn{border:0;background:var(--paper);border-radius:999px;width:34px;height:34px;font-size:16px;box-shadow:0 2px 0 rgba(0,0,0,.08);pointer-events:auto;flex:none}
+
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fff;color:var(--ink);border-radius:14px;padding:7px 11px;font-size:14px;line-height:1.45;max-width:min(240px,62vw);box-shadow:0 3px 10px rgba(0,0,0,.12);font-weight:700}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#fff}
+.bubble .who{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+.emo{position:absolute;transform:translate(-50%,-100%);font-size:34px;animation:pop 1.3s ease-out forwards}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-60%) scale(.4)}20%{opacity:1;transform:translate(-50%,-100%) scale(1.15)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-150%) scale(1)}}
+
+.panel{position:fixed;left:0;right:0;bottom:0;transform:translateY(105%);transition:transform .3s ease}
+.panel.show{transform:none}
+.panel .in{max-width:640px;margin:0 auto;background:var(--paper);border-radius:22px 22px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 24px rgba(0,0,0,.12);max-height:62vh;overflow:auto}
+.q{font-weight:800;font-size:16px;line-height:1.5;margin:2px 0 10px;text-wrap:balance}
+.q small{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em}
+.opts{display:grid;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;background:#fff;border:2px solid var(--line);border-bottom-width:4px;border-radius:14px;padding:10px 12px;font-size:14.5px;font-weight:700;line-height:1.5}
+.opt:active{transform:translateY(2px)}
+.opt .k{flex:none;width:24px;height:24px;border-radius:8px;background:var(--sky);display:grid;place-items:center;font-size:12px;font-weight:800}
+.res h3{margin:0 0 4px;font-size:20px}
+.res.ok h3{color:var(--ok)} .res.ng h3{color:var(--ng)}
+.res .model{background:var(--ok-bg);border-radius:12px;padding:8px 10px;font-weight:700;font-size:14px;margin:6px 0}
+.res p{margin:6px 0 12px;font-size:14px;line-height:1.65}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-weight:800;font-size:16px;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);transform:translateX(-50%);background:rgba(45,42,62,.75);color:#fff;font-size:12px;border-radius:999px;padding:5px 12px;pointer-events:none;transition:opacity .3s}
+.banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:var(--ok);color:#fff;font-weight:800;border-radius:999px;padding:6px 16px;font-size:14px;transition:opacity .3s;pointer-events:none}
+
+.screen{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:rgba(207,230,242,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.card{width:100%;max-width:440px;background:var(--paper);border-radius:24px;padding:22px 20px;box-shadow:0 10px 40px rgba(0,0,0,.15);max-height:calc(100% - 20px);overflow:auto}
+.card h1{font-size:26px;line-height:1.25;margin:4px 0 6px;text-wrap:balance}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--accent)}
+.card p{color:var(--muted);font-size:14px;margin:0 0 14px;line-height:1.6}
+.chapters{display:grid;gap:8px;margin-bottom:14px}
+.chap{display:flex;gap:12px;align-items:center;text-align:left;border:2px solid var(--line);background:#fff;border-radius:16px;padding:10px 12px}
+.chap b{display:block;font-size:15px}
+.chap small{color:var(--muted);font-size:12px}
+.chap .no{flex:none;width:40px;height:40px;border-radius:12px;background:var(--sky);display:grid;place-items:center;font-weight:800}
+.chap[disabled]{opacity:.5;cursor:default}
+.chap.sel{border-color:var(--accent)}
+.rank{font-size:64px;font-weight:800;color:var(--accent);line-height:1;margin:6px 0}
+.log{list-style:none;padding:0;margin:10px 0 16px;display:grid;gap:6px;font-size:14px}
+.log li{display:flex;gap:8px;background:#fff;border-radius:10px;padding:6px 10px}
+.stack{display:grid;gap:8px}
+@media (prefers-reduced-motion:reduce){.panel,.meter .bar i{transition:none}.emo{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="overlay"></div>
+<div class="hud">
+  <span class="pill" id="stepPill">第1話 企業訪問</span>
+  <div class="meter" title="面接官からの印象"><span>印象</span><span class="bar"><i id="meterBar"></i></span><span id="meterNum">50</span></div>
+  <button class="iconbtn" id="soundBtn" aria-label="音声のオンオフ">🔊</button>
+</div>
+<div class="banner" id="banner" style="opacity:0">お手本</div>
+<div class="hint" id="hint" style="opacity:0">タップでセリフを送る</div>
+<div class="panel" id="panel"><div class="in" id="panelIn"></div></div>
+<div class="screen" id="screen"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* =========================================================
+   3D の土台
+   ========================================================= */
+const stage=document.getElementById('stage'), overlay=document.getElementById('overlay');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color('#cfe6f2'); scene.fog=new THREE.Fog('#cfe6f2',16,32);
+const camera=new THREE.PerspectiveCamera(45,1,0.1,100);
+const camLook=new THREE.Vector3(0,1,0);
+camera.position.set(1,5.5,10);
+function resize(){
+  const w=innerWidth,h=innerHeight; renderer.setSize(w,h);
+  camera.aspect=w/h; camera.fov=w<h?62:42;
+  // 下の選択パネルの分だけ、被写体を画面の上寄りに置く
+  camera.setViewOffset(w,h,0,h*(w<h?0.17:0.12),w,h);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize); resize();
+
+scene.add(new THREE.HemisphereLight('#ffffff','#bba98c',0.85));
+const sun=new THREE.DirectionalLight('#fff3e0',0.75); sun.position.set(4,9,6); sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024); Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10});
+scene.add(sun);
+
+const mat=c=>new THREE.MeshStandardMaterial({color:c,flatShading:true,roughness:.85});
+function box(w,h,d,c,x=0,y=0,z=0,parent=scene){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c)); m.position.set(x,y,z);
+  m.castShadow=true; m.receiveShadow=true; parent.add(m); return m;
+}
+function cyl(rt,rb,h,c,x,y,z,seg=7,parent=scene){
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat(c)); m.position.set(x,y,z);
+  m.castShadow=true; m.receiveShadow=true; parent.add(m); return m;
+}
+
+/* ---------- 部屋 ---------- */
+box(17,0.1,11.5,'#e9dcc6',0,-0.05,0);
+box(17,3.2,0.15,'#f6efe4',0,1.6,-4.65);
+box(0.15,3.2,7.4,'#f1e7d8',-7.6,1.6,-1.9);
+box(0.15,3.2,2.4,'#f1e7d8',-7.6,1.6,4.3);
+box(0.15,0.9,1.2,'#f1e7d8',-7.6,2.75,2.5);
+box(0.2,2.35,0.1,'#9b7653',-7.6,1.17,1.88); box(0.2,2.35,0.1,'#9b7653',-7.6,1.17,3.12);
+box(0.04,0.04,4.5,'#e2d4bd',-7.5,0.9,-2.3);
+// 窓
+box(3.2,1.5,0.06,'#bfe3f5',2.5,1.85,-4.55); box(3.4,0.08,0.12,'#ffffff',2.5,1.08,-4.52);
+box(0.06,1.5,0.08,'#ffffff',2.5,1.85,-4.5);
+// 受付
+box(2.6,1.05,0.6,'#8a6a4f',-3.5,0.525,-0.45); box(2.8,0.06,0.72,'#f6f2ea',-3.5,1.08,-0.45);
+box(0.3,0.22,0.2,'#d8d2c6',-2.6,1.22,-0.5);
+(function sign(){
+  const c=document.createElement('canvas'); c.width=512; c.height=128; const g=c.getContext('2d');
+  g.fillStyle='#2f3a56'; g.fillRect(0,0,512,128); g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle';
+  g.font='bold 54px sans-serif'; g.fillText('株式会社ストレンジ',256,58);
+  g.font='22px sans-serif'; g.fillText('STRANGE Inc.',256,104);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.65),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));
+  m.position.set(-3.5,2.35,-4.56); scene.add(m);
+})();
+// 植物
+function plant(x,z){ cyl(0.22,0.17,0.45,'#c9764b',x,0.22,z); const l=new THREE.Mesh(new THREE.IcosahedronGeometry(0.42,0),mat('#5fa36a'));
+  l.position.set(x,0.85,z); l.castShadow=true; scene.add(l); const l2=l.clone(); l2.scale.setScalar(.7); l2.position.y=1.25; scene.add(l2); }
+plant(-0.8,-3.9); plant(5.8,-3.9); plant(-6.8,-3.9);
+// 応接スペース
+box(4.2,0.02,4.6,'#d6e5d3',2.5,0.01,0);
+box(1.8,0.08,1.2,'#fdfaf5',2.5,0.72,0);
+[[-0.8,-0.5],[0.8,-0.5],[-0.8,0.5],[0.8,0.5]].forEach(([dx,dz])=>cyl(0.04,0.04,0.7,'#8a8a8a',2.5+dx,0.35,dz,6));
+function chair(x,z,ry){
+  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; scene.add(g);
+  box(0.52,0.09,0.5,'#5b6b8c',0,0.45,0,g); box(0.52,0.62,0.09,'#5b6b8c',0,0.78,-0.22,g);
+  [[-0.22,-0.2],[0.22,-0.2],[-0.22,0.2],[0.22,0.2]].forEach(([a,b])=>box(0.05,0.42,0.05,'#444',a,0.21,b,g));
+}
+chair(2.5,1.5,Math.PI); chair(2.5,-1.5,0); chair(3.75,1.5,Math.PI); chair(1.25,-1.5,0);
+
+/* ---------- キャラクター ---------- */
+function person({suit,skin='#f2c9a5',hair,tie,shirt='#ffffff',long=false,name,pitch}){
+  const p=new THREE.Group(); scene.add(p);
+  const hips=new THREE.Group(); hips.position.y=0.85; p.add(hips);
+  const leg=(sx)=>{ const th=new THREE.Group(); th.position.x=sx; hips.add(th);
+    box(0.15,0.44,0.17,suit,0,-0.21,0,th); const kn=new THREE.Group(); kn.position.y=-0.42; th.add(kn);
+    box(0.14,0.43,0.16,suit,0,-0.215,0,kn); box(0.15,0.07,0.26,'#2a2523',0,-0.43,0.05,kn); return [th,kn]; };
+  const [thL,knL]=leg(0.11), [thR,knR]=leg(-0.11);
+  const torso=new THREE.Group(); hips.add(torso);
+  box(0.48,0.62,0.27,suit,0,0.31,0,torso);
+  box(0.15,0.36,0.01,shirt,0,0.42,0.136,torso);
+  if(tie) box(0.06,0.3,0.012,tie,0,0.4,0.143,torso);
+  cyl(0.06,0.07,0.1,skin,0,0.66,0,6,torso);
+  const head=new THREE.Group(); head.position.y=0.8; torso.add(head);
+  const hm=new THREE.Mesh(new THREE.IcosahedronGeometry(0.16,1),mat(skin)); hm.castShadow=true; head.add(hm);
+  box(0.34,0.11,0.34,hair,0,0.12,-0.01,head); box(0.34,0.2,0.1,hair,0,0.03,-0.13,head);
+  if(long) box(0.36,0.42,0.12,hair,0,-0.1,-0.13,head);
+  const eyes=[box(0.035,0.045,0.02,'#2a2523',0.06,0.01,0.145,head),box(0.035,0.045,0.02,'#2a2523',-0.06,0.01,0.145,head)];
+  box(0.06,0.014,0.02,'#b5574b',0,-0.07,0.145,head);
+  const arm=(sx)=>{ const a=new THREE.Group(); a.position.set(sx,0.58,0); torso.add(a);
+    box(0.12,0.58,0.14,suit,0,-0.29,0,a); const h=new THREE.Mesh(new THREE.IcosahedronGeometry(0.06,0),mat(skin)); h.position.y=-0.62; a.add(h); return a; };
+  const armL=arm(0.3), armR=arm(-0.3);
+  p.u={hips,torso,head,armL,armR,thL,thR,knL,knR,eyes};
+  p.name=name; p.pitch=pitch; p.blink=Math.random()*4;
+  return p;
+}
+const P=person({suit:'#2f3a56',hair:'#2b2420',tie:'#c0392b',name:'あなた（田中）',pitch:1.05});
+const U=person({suit:'#7a9cc0',hair:'#4a3326',long:true,shirt:'#fdf3e7',name:'受付',pitch:1.45});
+const S=person({suit:'#3d3d45',hair:'#6b6b6b',tie:'#2e6fb5',name:'人事部 鈴木様',pitch:0.75});
+
+/* ---------- 小道具 ---------- */
+const bag=box(0.42,0.3,0.1,'#1f1f24');
+const phone=box(0.075,0.14,0.012,'#111');
+const card=box(0.1,0.006,0.06,'#ffffff');
+
+/* =========================================================
+   トゥイーン・アニメーション
+   ========================================================= */
+let TW=[];
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function tw(obj,key,to,ms=500){
+  TW=TW.filter(x=>!(x.obj===obj&&x.key===key));
+  return new Promise(r=>TW.push({obj,key,from:obj[key],to,ms:Math.max(ms,1),t0:performance.now(),r}));
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const all=(...a)=>Promise.all(a);
+const D=Math.PI/180;
+
+const sit=(p,ms=550)=>all(tw(p.u.hips.position,'y',0.52,ms),tw(p.u.thL.rotation,'x',-1.57,ms),tw(p.u.thR.rotation,'x',-1.57,ms),tw(p.u.knL.rotation,'x',1.57,ms),tw(p.u.knR.rotation,'x',1.57,ms),tw(p.u.torso.rotation,'x',0,ms));
+const stand=(p,ms=500)=>all(tw(p.u.hips.position,'y',0.85,ms),tw(p.u.thL.rotation,'x',0,ms),tw(p.u.thR.rotation,'x',0,ms),tw(p.u.knL.rotation,'x',0,ms),tw(p.u.knR.rotation,'x',0,ms),tw(p.u.torso.rotation,'x',0,ms));
+async function bow(p,deg,hold=450){ await tw(p.u.torso.rotation,'x',deg*D,520+deg*8); await wait(hold); await tw(p.u.torso.rotation,'x',0,600); }
+async function nod(p){ await tw(p.u.head.rotation,'x',0.3,220); await tw(p.u.head.rotation,'x',0,260); }
+const armsFwd=(p,both=true,ms=450)=>all(tw(p.u.armR.rotation,'x',-1.15,ms),tw(p.u.armR.rotation,'z',0.28,ms),
+  both?tw(p.u.armL.rotation,'x',-1.15,ms):0,both?tw(p.u.armL.rotation,'z',-0.28,ms):0);
+const armsDown=(p,ms=450)=>all(tw(p.u.armR.rotation,'x',0,ms),tw(p.u.armR.rotation,'z',-0.05,ms),tw(p.u.armL.rotation,'x',0,ms),tw(p.u.armL.rotation,'z',0.05,ms));
+async function wave(p){ await tw(p.u.armR.rotation,'z',-2.5,300); for(let i=0;i<3;i++){ await tw(p.u.armR.rotation,'z',-2.2,160); await tw(p.u.armR.rotation,'z',-2.7,160);} await tw(p.u.armR.rotation,'z',-0.05,300); }
+function turnTo(p,ry,ms=320){ const c=p.rotation.y; const d=((ry-c+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI; return tw(p.rotation,'y',c+d,ms); }
+function face(p,q){ return turnTo(p,Math.atan2(q.position.x-p.position.x,q.position.z-p.position.z)); }
+async function walk(p,x,z,speed=1.7){
+  const dx=x-p.position.x, dz=z-p.position.z, dist=Math.hypot(dx,dz); if(dist<0.01) return;
+  await turnTo(p,Math.atan2(dx,dz)); p.walking=true;
+  const ms=dist/speed*1000; await all(tw(p.position,'x',x,ms),tw(p.position,'z',z,ms));
+  p.walking=false; p.u.thL.rotation.x=p.u.thR.rotation.x=0; p.u.armL.rotation.x=p.u.armR.rotation.x=0; p.u.hips.position.y=0.85;
+}
+function moveZ(p,z,ms=400){ return tw(p.position,'z',z,ms); }
+
+// 小道具の付け替え（見た目の位置を保ったまま親を変える）
+function attachTo(obj,parent,x,y,z){ obj.visible=true; parent.add(obj); obj.position.set(x,y,z); obj.rotation.set(0,0,0); }
+async function moveProp(obj,x,y,z,ms=450){ obj.visible=true; scene.attach(obj); await all(tw(obj.position,'x',x,ms),tw(obj.position,'y',y,ms),tw(obj.position,'z',z,ms),tw(obj.rotation,'x',0,ms),tw(obj.rotation,'y',0,ms),tw(obj.rotation,'z',0,ms)); }
+async function handTo(obj,arm,ms=400){ arm.attach(obj); await all(tw(obj.position,'x',0,ms),tw(obj.position,'y',-0.66,ms),tw(obj.position,'z',0.07,ms)); }
+
+/* ---------- 状態を一気にセット（お手本の巻き戻し用） ---------- */
+function pose(p,{x,z,ry,sit:s=false,vis=true,arms='down'}){
+  p.visible=vis; p.walking=false; p.position.set(x,0,z); p.rotation.set(0,ry,0);
+  const u=p.u; u.hips.position.y=s?0.52:0.85;
+  u.thL.rotation.set(s?-1.57:0,0,0); u.thR.rotation.set(s?-1.57:0,0,0);
+  u.knL.rotation.set(s?1.57:0,0,0); u.knR.rotation.set(s?1.57:0,0,0);
+  u.torso.rotation.set(0,0,0); u.head.rotation.set(0,0,0);
+  if(arms==='fwd'){ u.armR.rotation.set(-1.15,0,0.28); u.armL.rotation.set(-1.15,0,-0.28); }
+  else { u.armR.rotation.set(0,0,-0.05); u.armL.rotation.set(0,0,0.05); }
+}
+function applyState(st){
+  TW=[];
+  pose(P,st.P); pose(U,st.U||{x:-3.5,z:-1.15,ry:0}); pose(S,st.S||{x:6.2,z:-3.9,ry:0,vis:false});
+  if(st.bag==='hand') attachTo(bag,P.u.armL,0,-0.8,0);
+  else if(st.bag==='floor') attachTo(bag,scene,2.0,0.15,1.55);
+  else if(st.bag==='chair') attachTo(bag,scene,3.75,0.65,1.5);
+  phone.visible=false; attachTo(phone,P.u.armR,0,-0.66,0.07); phone.visible=false;
+  if(st.card==='S') attachTo(card,S.u.armR,0,-0.66,0.07);
+  else if(st.card==='table') attachTo(card,scene,2.5,0.765,0.4);
+  else card.visible=false;
+}
+
+/* =========================================================
+   カメラ
+   ========================================================= */
+const CAMS={
+  wide:[[1,5.5,10],[0,0.6,0]],
+  recep:[[-1.1,2.2,3.9],[-3.5,1.1,-0.3]],
+  room:[[5.8,2.4,4.6],[2.5,0.9,0.4]],
+  side:[[6.1,2.1,0.3],[2.5,0.95,0]],
+  card:[[4.6,1.7,0.6],[2.5,1.1,0]],
+  overS:[[1.5,2.25,-4.0],[2.6,0.95,1.2]],
+  door:[[-3.2,2.1,5.4],[-6.6,1.1,2.4]],
+};
+// 縦長の画面では、二人が横に離れすぎないよう斜め45°寄りから撮る
+const CAMS_PORTRAIT={
+  side:[[5.5,2.5,3.7],[2.5,0.95,-0.1]],
+  card:[[4.2,1.95,2.7],[2.5,1.1,-0.1]],
+};
+const cam=name=>(innerWidth<innerHeight&&CAMS_PORTRAIT[name])||CAMS[name];
+function camTo(name,ms=1100){
+  const [p,l]=cam(name);
+  return all(tw(camera.position,'x',p[0],ms),tw(camera.position,'y',p[1],ms),tw(camera.position,'z',p[2],ms),
+    tw(camLook,'x',l[0],ms),tw(camLook,'y',l[1],ms),tw(camLook,'z',l[2],ms));
+}
+
+/* =========================================================
+   吹き出し・音声
+   ========================================================= */
+let soundOn=true, VOICE=null;
+function pickVoice(){ try{ const vs=speechSynthesis.getVoices(); VOICE=vs.find(v=>/^ja/i.test(v.lang))||null; }catch(e){} }
+try{ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }catch(e){}
+function tts(text,pitch){
+  return new Promise(res=>{
+    if(!soundOn||!('speechSynthesis' in window)) return res();
+    try{ const u=new SpeechSynthesisUtterance(text); u.lang='ja-JP'; if(VOICE) u.voice=VOICE; u.pitch=pitch; u.rate=1.05;
+      u.onend=u.onerror=()=>res(); speechSynthesis.speak(u); }catch(e){ res(); }
+  });
+}
+const tags=new Map();
+function tag(p,el){ overlay.appendChild(el); tags.set(el,p); return el; }
+function untag(el){ tags.delete(el); el.remove(); }
+let skipper=null;
+const hintEl=document.getElementById('hint');
+async function say(p,text){
+  const el=document.createElement('div'); el.className='bubble'; el.innerHTML=`<span class="who">${p.name}</span>${text}`; el.dataset.y='0.5'; tag(p,el);
+  hintEl.style.opacity=1;
+  const skip=new Promise(r=>skipper=r);
+  await Promise.race([all(tts(text,p.pitch),wait(Math.max(1100,text.length*105))),wait(text.length*260+2500),skip]);
+  try{ speechSynthesis.cancel(); }catch(e){}
+  skipper=null; hintEl.style.opacity=0; untag(el);
+}
+stage.addEventListener('pointerdown',()=>{ if(skipper) skipper(); });
+function emote(p,e){ const el=document.createElement('div'); el.className='emo'; el.textContent=e; el.dataset.y='0.42'; tag(p,el); setTimeout(()=>untag(el),1300); }
+const v3=new THREE.Vector3();
+function placeTags(){
+  for(const [el,p] of tags){
+    if(!p.visible){ el.style.display='none'; continue; }
+    p.u.head.getWorldPosition(v3); v3.y+=+el.dataset.y; v3.project(camera);
+    if(v3.z>1){ el.style.display='none'; continue; }
+    el.style.display=''; el.style.left=((v3.x+1)/2*innerWidth)+'px'; el.style.top=((1-v3.y)/2*innerHeight)+'px';
+  }
+}
+
+/* =========================================================
+   ループ
+   ========================================================= */
+let last=performance.now();
+function loop(now){
+  for(const t of TW.slice()){
+    const k=Math.min(1,(now-t.t0)/t.ms); t.obj[t.key]=t.from+(t.to-t.from)*ease(k);
+    if(k>=1){ TW.splice(TW.indexOf(t),1); t.r(); }
+  }
+  const s=now/1000;
+  for(const p of [P,U,S]){
+    if(p.walking){ const a=Math.sin(s*9)*0.45; p.u.thL.rotation.x=a; p.u.thR.rotation.x=-a; p.u.armL.rotation.x=-a*.5; p.u.armR.rotation.x=a*.5; p.u.hips.position.y=0.85+Math.abs(Math.cos(s*9))*0.03; }
+    const b=(s+p.blink)%4<0.12; p.u.eyes.forEach(e=>e.scale.y=b?0.15:1);
+  }
+  camera.lookAt(camLook);
+  renderer.render(scene,camera); placeTags(); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* =========================================================
+   シナリオ：第1話 企業訪問
+   opts の ok:true が正解。act は選んだ行動のアニメーション、react は相手の反応。
+   ========================================================= */
+const SEAT_P={x:2.5,z:1.5,ry:Math.PI,sit:true}, STAND_P={x:2.5,z:1.15,ry:Math.PI};
+const SEAT_S={x:2.5,z:-1.5,ry:0,sit:true}, STAND_S={x:2.5,z:-1.15,ry:0};
+const STEPS=[
+ { title:'受付でのあいさつ', cam:'recep', npc:U,
+   state:{P:{x:-3.5,z:0.95,ry:Math.PI},bag:'hand',card:'S'},
+   q:'受付に着いた。今は13:50、14時から人事部の鈴木様と面談の約束。最初になんと言う？',
+   opts:[
+    {t:'「お世話になっております。山形大学の田中と申します。本日14時に、人事部の鈴木様とお約束をいただいております。」',ok:true,
+     act:async()=>{ await say(P,'お世話になっております。山形大学の田中と申します。本日14時に、人事部の鈴木様とお約束をいただいております。'); await bow(P,15); },
+     why:'まず名乗り、<b>だれと何時に約束しているか</b>を伝えます。相手の会社の人には「様」。言葉を言ってから会釈（約15°）。'},
+    {t:'「すみません、鈴木さんいますか？」',
+     act:async()=>{ await say(P,'すみません、鈴木さんいますか？'); }, react:'…恐れ入りますが、お名前を伺ってもよろしいでしょうか。',
+     why:'名乗っていないうえ、くだけすぎです。相手の会社の人は「鈴木様」、「いる」は尊敬語の「いらっしゃる」を使います。'},
+    {t:'手を振りながら「おはようございます！面接に来ました〜」',
+     act:async()=>{ await all(wave(P),say(P,'おはようございます！面接に来ました〜')); }, react:'え、ええと…どちらの方でしょうか？',
+     why:'午後なのに「おはようございます」はアルバイト式でNG（資料より）。名前も約束の相手も伝わりません。'},
+   ],
+   after:async()=>{ await say(U,'田中様ですね。お待ちしておりました。応接室へご案内いたします。'); camTo('room',1600); await walk(P,2.5,2.25);
+     await turnTo(P,Math.PI); await say(U,'こちらにお掛けになって、少々お待ちください。'); } },
+
+ { title:'応接室での待ち方', cam:'room', npc:U,
+   state:{P:{x:2.5,z:2.25,ry:Math.PI},bag:'hand',card:'S'},
+   q:'応接室に案内され「お掛けになってお待ちください」と言われた。どうする？',
+   opts:[
+    {t:'「失礼いたします」と言って座り、カバンは足元に置く',ok:true,
+     act:async()=>{ await say(P,'失礼いたします。'); await moveZ(P,1.5); await sit(P); await moveProp(bag,2.0,0.15,1.55); },
+     why:'勧められたら座ってOK。カバンは椅子に置かず<b>足元</b>に置きます（資料より）。'},
+    {t:'座って、カバンはとなりの空いている椅子に置く',
+     act:async()=>{ await moveZ(P,1.5); await sit(P); await moveProp(bag,3.75,0.65,1.5); },
+     why:'カバンを椅子の上に置くのはNG。足元に置きましょう。'},
+    {t:'座らずに、部屋の中をうろうろ見て回る',
+     act:async()=>{ await walk(P,4.6,0.6); await walk(P,0.6,-1.6); await walk(P,2.5,2.25); await turnTo(P,Math.PI); },
+     why:'勧められたら座って静かに待ちます。勝手に歩き回ると落ち着きのない印象に。'},
+   ] },
+
+ { title:'待ち時間のスマホ', cam:'overS', npc:null,
+   state:{P:SEAT_P,bag:'floor',card:'S'},
+   q:'鈴木様を待つあいだ、スマホはどうする？',
+   opts:[
+    {t:'会社に入る前に電源を切ってある。そのまま静かに待つ',ok:true,
+     act:async()=>{ await nod(P); await wait(500); },
+     why:'マナーモードでもバイブ音が響くことがあるので、会社に入ったら<b>電源OFF</b>がおすすめ。待ち時間のスマホいじりも慎みます。'},
+    {t:'マナーモードにして、ちょっとだけSNSをチェック',
+     act:async()=>{ phone.visible=true; await all(tw(P.u.armR.rotation,'x',-1.5,400),tw(P.u.head.rotation,'x',0.4,400)); await wait(1400); },
+     why:'担当者が来るまで、スマホはチェックせず静かに待ちましょう。'},
+    {t:'足を組んで、スマホでゲームの続き',
+     act:async()=>{ phone.visible=true; await all(tw(P.u.thR.rotation,'x',-1.95,400),tw(P.u.thR.rotation,'y',0.35,400),tw(P.u.armR.rotation,'x',-1.5,400),tw(P.u.head.rotation,'x',0.4,400)); await wait(1400); },
+     why:'足組み・携帯いじりは、印象を悪くする<b>非言語コミュニケーション</b>の代表例です。'},
+   ],
+   after:async()=>{ camTo('side',1400); S.visible=true; S.position.set(6.2,0,-3.9); await walk(S,2.5,-1.15); await turnTo(S,0);
+     await say(S,'お待たせいたしました。人事部の鈴木です。'); } },
+
+ { title:'入室時のあいさつ', cam:'side', npc:S,
+   state:{P:SEAT_P,S:STAND_S,bag:'floor',card:'S'},
+   q:'鈴木様が入ってきた！どうする？',
+   opts:[
+    {t:'すぐに立ち、「山形大学の田中と申します。本日はよろしくお願いいたします。」と言ってから、お辞儀（30°）',ok:true,
+     act:async()=>{ await all(stand(P),moveZ(P,1.15,500)); await say(P,'山形大学の田中と申します。本日はよろしくお願いいたします。'); await bow(P,30); },
+     why:'待っている場合も、担当者が来たら<b>一度立って</b>挨拶します。言葉が先、お辞儀が後の<b>先言後礼</b>。基本は敬礼（30°）。'},
+    {t:'座ったまま「よろしくお願いします」と会釈',
+     act:async()=>{ await say(P,'よろしくお願いします。'); await bow(P,15); },
+     why:'相手が立っているのに座ったままは失礼。一度立って挨拶しましょう。'},
+    {t:'立って、「よろしくお願いします」と言いながら、何度もぺこぺこお辞儀',
+     act:async()=>{ await all(stand(P),moveZ(P,1.15,500)); await all(say(P,'よろしくお願いします。'),(async()=>{for(let i=0;i<4;i++) await bow(P,18,40);})()); },
+     why:'言葉とお辞儀を同時にするとメリハリがなくなります。首だけ何度もぺこぺこするのも誠意が伝わりません。'},
+   ],
+   after:async()=>{ await bow(S,30); await say(S,'改めまして、人事部の鈴木と申します。'); await armsFwd(S); } },
+
+ { title:'名刺の受け取り方', cam:'card', npc:S,
+   state:{P:STAND_P,S:{...STAND_S,arms:'fwd'},bag:'floor',card:'S'},
+   q:'鈴木様が名刺を差し出した。どう受け取る？',
+   opts:[
+    {t:'両手で受け取り、「頂戴いたします」と軽くお辞儀',ok:true,
+     act:async()=>{ await armsFwd(P); await handTo(card,P.u.armR); armsDown(S); await say(P,'頂戴いたします。'); await bow(P,15,200); },
+     why:'名刺は<b>両手</b>で受け取り「頂戴いたします」（「受け取る」の謙譲語）。受け取った名刺は、面談中はテーブルの上に置いておきます。'},
+    {t:'片手でさっと受け取り「どうも」',
+     act:async()=>{ await armsFwd(P,false); await handTo(card,P.u.armR); armsDown(S); await say(P,'どうも。'); },
+     why:'片手で受け取るのは失礼。「どうも」もくだけすぎです。'},
+    {t:'「いただきます！」と受け取って、すぐポケットにしまう',
+     act:async()=>{ await armsFwd(P,false); await handTo(card,P.u.armR); armsDown(S); await say(P,'いただきます！'); await armsDown(P); card.visible=false; },
+     react:'（あ、しまわれちゃった…）',
+     why:'「いただきます」は食事のあいさつに聞こえます。名刺をすぐしまうのも×。面談中はテーブルに置いておきます。'},
+   ],
+   after:async()=>{ await armsDown(P); await moveProp(card,2.5,0.765,0.4); await say(S,'どうぞ、お掛けください。'); } },
+
+ { title:'着席のしかた', cam:'side', npc:S,
+   state:{P:STAND_P,S:STAND_S,bag:'floor',card:'table'},
+   q:'「どうぞ、お掛けください」と言われた。どうする？',
+   opts:[
+    {t:'「失礼いたします」と言ってから座る',ok:true,
+     act:async()=>{ await say(P,'失礼いたします。'); await all(moveZ(P,1.5),sit(P)); },
+     why:'担当者から<b>着席を勧められてから</b>、ひと言そえて座ります。'},
+    {t:'何も言わずにドカッと座り、背もたれによりかかる',
+     act:async()=>{ await all(moveZ(P,1.5,300),sit(P,300)); await tw(P.u.torso.rotation,'x',-0.28,400); await wait(700); },
+     why:'無言で座る・ふんぞり返るのは×。背筋を伸ばして座りましょう。'},
+    {t:'「いえいえ、鈴木様からどうぞ」と立ったまま待ち続ける',
+     act:async()=>{ await say(P,'いえいえ、鈴木様からどうぞ。'); await wait(400); }, react:'…では、どうぞお掛けください。',
+     why:'勧められたら素直に座ります。遠慮しすぎると面談が進みません。'},
+   ],
+   after:async()=>{ await all(moveZ(S,-1.5),sit(S)); camTo('overS'); await say(S,'事前にお送りした会社案内は、もう見ていただけましたか？'); } },
+
+ { title:'「見た」の敬語', cam:'overS', npc:S,
+   state:{P:SEAT_P,S:SEAT_S,bag:'floor',card:'table'},
+   q:'「会社案内は、もう見ていただけましたか？」と聞かれた。',
+   opts:[
+    {t:'「はい、拝見しました。」',ok:true, act:async()=>{ await say(P,'はい、拝見しました。'); await nod(P); },
+     why:'見たのは自分なので、謙譲語の<b>「拝見する」</b>。'},
+    {t:'「はい、ご覧になりました。」', act:async()=>{ await say(P,'はい、ご覧になりました。'); await nod(P); }, react:'ふふ、それだと私が見たみたいですね。',
+     why:'「ご覧になる」は相手の動作に使う尊敬語。自分には使いません。'},
+    {t:'「はい、拝見されました。」', act:async()=>{ await say(P,'はい、拝見されました。'); await nod(P); },
+     why:'謙譲語「拝見する」に尊敬の「れる」が混ざった誤用です。'},
+   ],
+   after:async()=>{ await say(S,'ありがとうございます。では、何かご質問はありますか？'); } },
+
+ { title:'逆質問の敬語', cam:'overS', npc:S,
+   state:{P:SEAT_P,S:SEAT_S,bag:'floor',card:'table'},
+   q:'逆質問のチャンス。研修制度について聞きたい。',
+   opts:[
+    {t:'「御社の研修制度について、伺ってもよろしいでしょうか。」',ok:true, act:async()=>{ await say(P,'御社の研修制度について、伺ってもよろしいでしょうか。'); },
+     why:'相手の会社は話し言葉で<b>「御社」</b>（書き言葉は「貴社」）。聞くのは自分なので謙譲語<b>「伺う」</b>。'},
+    {t:'「弊社の研修制度について、お聞きになってもよろしいでしょうか。」', act:async()=>{ await say(P,'弊社の研修制度について、お聞きになってもよろしいでしょうか。'); }, react:'弊社…？ ええと、うちの会社のことですよね？',
+     why:'「弊社」は自分の会社のこと。「お聞きになる」は尊敬語なので自分の動作には×。'},
+    {t:'「貴社の研修制度って、どんな感じっすか？」', act:async()=>{ await say(P,'貴社の研修制度って、どんな感じっすか？'); },
+     why:'話すときは「御社」。「〜っすか」は面接では避けましょう。'},
+   ],
+   after:async()=>{ await say(S,'入社後の3か月間は、同期全員で研修を行っております。'); await say(S,'本日の面談は以上です。ありがとうございました。'); } },
+
+ { title:'面談後のお礼', cam:'side', npc:S,
+   state:{P:SEAT_P,S:SEAT_S,bag:'floor',card:'table'},
+   q:'面談が終わった。どうする？',
+   opts:[
+    {t:'立ち上がって「本日はありがとうございました。」と言ってから、深くお辞儀',ok:true,
+     act:async()=>{ await all(stand(P),moveZ(P,1.15,500)); await say(P,'本日はありがとうございました。'); await bow(P,40,600); },
+     why:'面談後は<b>一度立って</b>お礼を言い、それからお辞儀します。'},
+    {t:'座ったまま「ご苦労さまでした」',
+     act:async()=>{ await say(P,'ご苦労さまでした。'); await bow(P,10,100); }, react:'（ご苦労さま…？）',
+     why:'「ご苦労さま」は目上の人が目下の人に使う言葉。立ってお礼を伝えましょう。'},
+    {t:'「ありがとうございましたー」と言いながら、ドアへ歩き出す',
+     act:async()=>{ await all(stand(P),moveZ(P,1.15,400)); await all(say(P,'ありがとうございましたー。'),walk(P,0.3,2.0)); },
+     why:'歩きながらの挨拶・お辞儀はNG。立ち止まって、相手の方を向いて挨拶します。'},
+   ],
+   after:async()=>{ await all(stand(S),moveZ(S,-1.15,500)); await bow(S,30); card.visible=false; attachTo(bag,P.u.armL,0,-0.8,0);
+     camTo('door',2200); await walk(P,-6.9,2.5); await turnTo(P,Math.PI/2); await face(S,P); } },
+
+ { title:'退出のあいさつ', cam:'door', npc:S,
+   state:{P:{x:-6.9,z:2.5,ry:Math.PI/2},S:{x:2.5,z:-1.15,ry:Math.atan2(-9.4,3.65)},bag:'hand',card:'none'},
+   q:'ドアの前。部屋を出る前に…',
+   opts:[
+    {t:'振り返って「失礼いたします。」と言ってから、会釈して退出',ok:true,
+     act:async()=>{ await say(P,'失礼いたします。'); await bow(P,15); },
+     why:'退出するときは「失礼します／失礼いたします」と<b>もう一度挨拶</b>します（資料より）。'},
+    {t:'何も言わずに、そのまま出ていく',
+     act:async()=>{ await walk(P,-8.4,2.5); P.visible=false; await wait(500); },
+     why:'最後のひと言まで面接です。ドアの前で振り返って挨拶しましょう。'},
+    {t:'「さようなら〜」と手を振る',
+     act:async()=>{ await all(wave(P),say(P,'さようなら〜')); },
+     why:'「さようなら」と手を振るのは友だち向け。「失礼いたします」が正解です。'},
+   ],
+   after:async()=>{ await walk(P,-8.4,2.5); P.visible=false; await wait(300); } },
+];
+
+/* =========================================================
+   ゲーム進行
+   ========================================================= */
+const panel=document.getElementById('panel'), panelIn=document.getElementById('panelIn'), screenEl=document.getElementById('screen');
+const banner=document.getElementById('banner');
+let score=50, log=[];
+function setScore(v){ score=Math.max(0,Math.min(100,v)); meterBar.style.width=score+'%'; meterNum.textContent=score; }
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+function hidePanel(){ panel.classList.remove('show'); }
+function ask(step,i){
+  return new Promise(res=>{
+    const opts=shuffle(step.opts);
+    panelIn.innerHTML=`<div class="q"><small>Q${i+1} / ${STEPS.length}・${step.title}</small>${step.q}</div>
+      <div class="opts">${opts.map((o,j)=>`<button class="opt" data-j="${j}"><span class="k">${'ABC'[j]}</span><span>${o.t}</span></button>`).join('')}</div>`;
+    panel.classList.add('show');
+    panelIn.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ hidePanel(); res(opts[+b.dataset.j]); });
+  });
+}
+function result(step,choice){
+  return new Promise(res=>{
+    const good=step.opts.find(o=>o.ok);
+    panelIn.innerHTML=`<div class="res ${choice.ok?'ok':'ng'}"><h3>${choice.ok?'◎ 好印象！':'△ うーん…'}</h3>
+      ${choice.ok?'':`<div class="model">正解：${good.t}</div>`}
+      <p>${choice.ok?choice.why:choice.why+'<br><br>'+good.why}</p>
+      <button class="btn" id="nextBtn">${choice.ok?'つぎへ':'お手本を見て、つぎへ'}</button></div>`;
+    panel.classList.add('show'); nextBtn.focus();
+    nextBtn.onclick=()=>{ hidePanel(); res(); };
+  });
+}
+function flash(text){ banner.textContent=text; banner.style.opacity=1; }
+async function play(){
+  setScore(50); log=[]; screenEl.hidden=true;
+  // オープニング：入口から受付へ
+  applyState({...STEPS[0].state,P:{x:-8.4,z:2.5,ry:Math.PI/2}});
+  camera.position.set(...CAMS.wide[0]); camLook.set(...CAMS.wide[1]);
+  stepPill.textContent='第1話 企業訪問';
+  await wait(400); camTo('recep',2600); await walk(P,-3.5,0.95); await turnTo(P,Math.PI);
+  await say(U,'いらっしゃいませ。');
+  for(let i=0;i<STEPS.length;i++){
+    const st=STEPS[i]; stepPill.textContent=`Q${i+1}/${STEPS.length} ${st.title}`;
+    applyState(st.state); await camTo(st.cam,700);
+    const c=await ask(st,i);
+    await c.act();
+    if(c.ok){ emote(st.npc||P,'😊'); setScore(score+5); }
+    else { emote(st.npc||P,st.npc?'😓':'💦'); setScore(score-10); if(c.react&&st.npc) await say(st.npc,c.react); }
+    log.push({title:st.title,ok:c.ok});
+    await wait(500);
+    await result(st,c);
+    if(!c.ok){ applyState(st.state); await camTo(st.cam,300); flash('お手本'); await st.opts.find(o=>o.ok).act(); banner.style.opacity=0; await wait(300); }
+    if(st.after) await st.after();
+  }
+  finish();
+}
+function finish(){
+  const n=log.filter(l=>l.ok).length;
+  const [r,msg]=score>=90?['S','内定まちがいなし！']:score>=70?['A','好印象で面談終了！']:score>=50?['B','まずまず。次はもっと良くなる！']:['C','練習あるのみ！もう一度挑戦しよう'];
+  screenEl.hidden=false;
+  screenEl.innerHTML=`<div class="card" style="text-align:center">
+    <div class="eyebrow">第1話 企業訪問 クリア</div>
+    <div class="rank">${r}</div><h1>${msg}</h1>
+    <p>印象 ${score} / 100 ・ 正解 ${n} / ${STEPS.length}</p>
+    <ul class="log" style="text-align:left">${log.map(l=>`<li>${l.ok?'⭕':'❌'} ${l.title}</li>`).join('')}</ul>
+    <div class="stack"><button class="btn" id="again">もう一度プレイ</button><button class="btn ghost" id="toTitle">タイトルへ</button></div></div>`;
+  again.onclick=()=>play(); toTitle.onclick=title;
+}
+function title(){
+  applyState({...STEPS[0].state,P:{x:-1.2,z:2.0,ry:0.5},S:{x:0.4,z:2.3,ry:-0.6}});
+  camera.position.set(1.4,1.7,6.2); camLook.set(-0.3,1.0,1.6);
+  screenEl.hidden=false;
+  screenEl.innerHTML=`<div class="card">
+    <div class="eyebrow">STRANGE KEIGO WORLD</div>
+    <h1>企業訪問シミュレーター</h1>
+    <p>3つの行動から正しいものを選んで、面談を最後まで乗り切ろう。選んだとおりにキャラクターが動き、相手の反応で印象が上下します。</p>
+    <div class="chapters">
+      <button class="chap sel" id="ch1"><span class="no">1</span><span><b>企業訪問・面談</b><small>受付 → 名刺交換 → 面談 → 退出（全10問）</small></span></button>
+      <button class="chap" disabled><span class="no">2</span><span><b>電話でアポ取り</b><small>準備中</small></span></button>
+      <button class="chap" disabled><span class="no">3</span><span><b>社内で上司と</b><small>準備中</small></span></button>
+    </div>
+    <button class="btn" id="startBtn">スタート（音声あり）</button>
+    <p style="margin:10px 0 0;font-size:12px">セリフは画面タップで送れます。右上の🔊で音声をオフにできます。</p></div>`;
+  startBtn.onclick=ch1.onclick=()=>{ pickVoice(); play(); };
+}
+soundBtn.onclick=()=>{ soundOn=!soundOn; soundBtn.textContent=soundOn?'🔊':'🔇'; if(!soundOn) try{speechSynthesis.cancel();}catch(e){} };
+title();
+</script>
+</body>
+</html>
