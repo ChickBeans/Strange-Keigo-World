@@ -22,21 +22,21 @@
     --bg:#1c1816; --surface:#272220; --surface2:#332b26; --text:#f5ece6; --muted:#b4a59b; --border:#43382f;
     --accent:#ffb347; --accent-ink:#2a1700;
     --son:#ff7a98; --son-bg:#4a2430; --ken:#6aa8ff; --ken-bg:#1f3350; --tei:#4fd1a5; --tei-bg:#183d32;
-    --ok:#4fd17f; --ok-bg:#1b3b27; --ng:#ff7474; --ng-bg:#4a2222; --shadow:0 3px 0 rgba(0,0,0,.4);
+    --ok:#4fd17f; --ok-bg:#1b3b27; --ng:#ff7474; --ng-bg:#4a2222; --shadow:0 3px 0 rgba(0,0,0,.4); color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#1c1816; --surface:#272220; --surface2:#332b26; --text:#f5ece6; --muted:#b4a59b; --border:#43382f;
   --accent:#ffb347; --accent-ink:#2a1700;
   --son:#ff7a98; --son-bg:#4a2430; --ken:#6aa8ff; --ken-bg:#1f3350; --tei:#4fd1a5; --tei-bg:#183d32;
-  --ok:#4fd17f; --ok-bg:#1b3b27; --ng:#ff7474; --ng-bg:#4a2222; --shadow:0 3px 0 rgba(0,0,0,.4);
+  --ok:#4fd17f; --ok-bg:#1b3b27; --ng:#ff7474; --ng-bg:#4a2222; --shadow:0 3px 0 rgba(0,0,0,.4); color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font-family:"M PLUS Rounded 1c",system-ui,sans-serif;line-height:1.6;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
 .wrap{max-width:600px;margin:0 auto;padding:0 16px 140px}
-header.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--border)}
 header.top .in{max-width:600px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
 .logo{font-weight:800;font-size:16px;white-space:nowrap;display:flex;align-items:center;gap:6px;background:none;border:0;padding:0}
 .logo .mark{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:16px}
@@ -120,7 +120,7 @@ body:not(.show-yomi) .yomi{display:none}
 
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;transform:translateY(110%);transition:transform .25s ease}
 .sheet.show{transform:none}
-.sheet .in{max-width:600px;margin:0 auto;padding:14px 16px 18px;border-radius:20px 20px 0 0;max-height:60vh;overflow:auto}
+.sheet .in{max-width:600px;margin:0 auto;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px));border-radius:20px 20px 0 0;max-height:60vh;overflow:auto}
 .sheet.ok .in{background:var(--ok-bg);border-top:3px solid var(--ok)}
 .sheet.ng .in{background:var(--ng-bg);border-top:3px solid var(--ng)}
 .sheet h3{margin:0 0 4px;font-size:19px}
@@ -562,7 +562,7 @@ function showQ(){
   <div class="opts" ${q.typeRow?'style="grid-template-columns:repeat(3,1fr)"':''}>
     ${q.opts.map((o,i)=>`<button class="opt ${o.cls||''}" data-i="${i}">${q.typeRow?'':`<span class="k">${i+1}</span>`}<span>${o.label}</span></button>`).join('')}
   </div>`;
-  quit.onclick=()=>{ if(confirm('このラウンドをやめますか？')) home(); };
+  quit.onclick=()=>{ if(quit.dataset.armed) home(); else { quit.dataset.armed=1; quit.textContent='やめる？'; quit.style.fontSize='14px'; setTimeout(()=>{ if(document.body.contains(quit)){ delete quit.dataset.armed; quit.textContent='✕'; quit.style.fontSize=''; } },2500); } };
   app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.i));
   window.scrollTo(0,0);
 }
