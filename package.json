@@ -1,0 +1,12 @@
+{
+  "name": "strange-keigo-world",
+  "private": true,
+  "scripts": {
+    "furigana": "node tools/build-furigana.js"
+  },
+  "devDependencies": {
+    "acorn": "^8.18.0",
+    "acorn-walk": "^8.3.5",
+    "kuromoji": "0.1.2"
+  }
+}
