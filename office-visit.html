@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>企業訪問シミュレーター</title>
+<title>ビジネス敬語シミュレーター</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
-/* 全画面の3Dステージ＋下から出る選択パネル。単一の明るい世界観（テーマ切替なし） */
+/* 全画面の3Dステージ＋下から出る選択パネル。電話の場面は右上に相手側の小窓。単一の明るい世界観（テーマ切替なし） */
 :root{
   --sky:#cfe6f2; --ink:#2d2a3e; --muted:#6f6a80; --paper:#fffaf2; --line:#eadfcd;
   --accent:#ff7a59; --accent-ink:#ffffff; --ok:#1f9d63; --ok-bg:#e3f6ec; --ng:#e0484e; --ng-bg:#fde8e8;
@@ -24,15 +24,19 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 #overlay{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 
 .hud{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;gap:8px;align-items:center;pointer-events:none}
-.pill{pointer-events:auto;background:var(--paper);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px;box-shadow:0 2px 0 rgba(0,0,0,.08);white-space:nowrap}
-.meter{flex:1;max-width:260px;margin-left:auto;background:var(--paper);border-radius:999px;padding:5px 10px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.pill{pointer-events:auto;background:var(--paper);border-radius:999px;padding:5px 12px;font-weight:800;font-size:13px;box-shadow:0 2px 0 rgba(0,0,0,.08);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:52vw}
+.meter{flex:1;max-width:240px;margin-left:auto;background:var(--paper);border-radius:999px;padding:5px 10px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;box-shadow:0 2px 0 rgba(0,0,0,.08);min-width:110px}
 .meter .bar{flex:1;height:10px;border-radius:99px;background:#efe6d6;overflow:hidden}
 .meter .bar i{display:block;height:100%;width:50%;background:linear-gradient(90deg,#ffb35c,var(--accent));border-radius:99px;transition:width .5s}
 .iconbtn{border:0;background:var(--paper);border-radius:999px;width:34px;height:34px;font-size:16px;box-shadow:0 2px 0 rgba(0,0,0,.08);pointer-events:auto;flex:none}
 
-.bubble{position:absolute;transform:translate(-50%,-100%);background:#fff;color:var(--ink);border-radius:14px;padding:7px 11px;font-size:14px;line-height:1.45;max-width:min(240px,62vw);box-shadow:0 3px 10px rgba(0,0,0,.12);font-weight:700}
+.pipframe{position:fixed;border:3px solid #fff;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:none}
+.pipframe span{position:absolute;left:6px;top:-12px;background:var(--ink);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;white-space:nowrap}
+
+.bubble{position:absolute;transform:translate(-50%,-100%);background:#fff;color:var(--ink);border-radius:14px;padding:7px 11px;font-size:14px;line-height:1.45;max-width:min(250px,64vw);box-shadow:0 3px 10px rgba(0,0,0,.14);font-weight:700}
 .bubble::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#fff}
 .bubble .who{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+.bubble.tel{background:#2d2a3e;color:#fff}.bubble.tel::after{border-top-color:#2d2a3e}.bubble.tel .who{color:#cfc8e8}
 .emo{position:absolute;transform:translate(-50%,-100%);font-size:34px;animation:pop 1.3s ease-out forwards}
 @keyframes pop{0%{opacity:0;transform:translate(-50%,-60%) scale(.4)}20%{opacity:1;transform:translate(-50%,-100%) scale(1.15)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-150%) scale(1)}}
 
@@ -53,20 +57,21 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:none}
 .hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);transform:translateX(-50%);background:rgba(45,42,62,.75);color:#fff;font-size:12px;border-radius:999px;padding:5px 12px;pointer-events:none;transition:opacity .3s}
-.banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:var(--ok);color:#fff;font-weight:800;border-radius:999px;padding:6px 16px;font-size:14px;transition:opacity .3s;pointer-events:none}
+.banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:var(--ok);color:#fff;font-weight:800;border-radius:999px;padding:6px 16px;font-size:14px;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.caption{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(45,42,62,.88);color:#fff;font-weight:800;border-radius:16px;padding:12px 20px;font-size:17px;text-align:center;pointer-events:none;transition:opacity .4s;max-width:86vw;line-height:1.5}
 
 .screen{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:rgba(207,230,242,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-.card{width:100%;max-width:440px;background:var(--paper);border-radius:24px;padding:22px 20px;box-shadow:0 10px 40px rgba(0,0,0,.15);max-height:calc(100% - 20px);overflow:auto}
-.card h1{font-size:26px;line-height:1.25;margin:4px 0 6px;text-wrap:balance}
+.card{width:100%;max-width:460px;background:var(--paper);border-radius:24px;padding:22px 20px;box-shadow:0 10px 40px rgba(0,0,0,.15);max-height:calc(100% - 20px);overflow:auto}
+.card h1{font-size:25px;line-height:1.25;margin:4px 0 6px;text-wrap:balance}
 .eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--accent)}
 .card p{color:var(--muted);font-size:14px;margin:0 0 14px;line-height:1.6}
-.chapters{display:grid;gap:8px;margin-bottom:14px}
-.chap{display:flex;gap:12px;align-items:center;text-align:left;border:2px solid var(--line);background:#fff;border-radius:16px;padding:10px 12px}
+.chapters{display:grid;gap:8px;margin-bottom:6px}
+.chap{display:flex;gap:12px;align-items:center;text-align:left;border:2px solid var(--line);border-bottom-width:4px;background:#fff;border-radius:16px;padding:10px 12px}
+.chap:active{transform:translateY(2px)}
 .chap b{display:block;font-size:15px}
-.chap small{color:var(--muted);font-size:12px}
+.chap small{color:var(--muted);font-size:12px;line-height:1.4;display:block}
 .chap .no{flex:none;width:40px;height:40px;border-radius:12px;background:var(--sky);display:grid;place-items:center;font-weight:800}
-.chap[disabled]{opacity:.5;cursor:default}
-.chap.sel{border-color:var(--accent)}
+.chap .rk{margin-left:auto;flex:none;font-weight:800;color:var(--accent);font-size:20px;min-width:22px;text-align:center}
 .rank{font-size:64px;font-weight:800;color:var(--accent);line-height:1;margin:6px 0}
 .log{list-style:none;padding:0;margin:10px 0 16px;display:grid;gap:6px;font-size:14px}
 .log li{display:flex;gap:8px;background:#fff;border-radius:10px;padding:6px 10px}
@@ -76,13 +81,15 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 </head>
 <body>
 <div id="stage"></div>
+<div class="pipframe" id="pipFrame" hidden><span id="pipLabel">📞 通話中</span></div>
 <div id="overlay"></div>
 <div class="hud">
-  <span class="pill" id="stepPill">第1話 企業訪問</span>
-  <div class="meter" title="面接官からの印象"><span>印象</span><span class="bar"><i id="meterBar"></i></span><span id="meterNum">50</span></div>
+  <span class="pill" id="stepPill">ビジネス敬語シミュレーター</span>
+  <div class="meter" title="相手からの印象"><span>印象</span><span class="bar"><i id="meterBar"></i></span><span id="meterNum">50</span></div>
   <button class="iconbtn" id="soundBtn" aria-label="音声のオンオフ">🔊</button>
 </div>
 <div class="banner" id="banner" style="opacity:0">お手本</div>
+<div class="caption" id="captionEl" style="opacity:0"></div>
 <div class="hint" id="hint" style="opacity:0">タップでセリフを送る</div>
 <div class="panel" id="panel"><div class="in" id="panelIn"></div></div>
 <div class="screen" id="screen"></div>
@@ -98,23 +105,26 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 stage.appendChild(renderer.domElement);
 const scene=new THREE.Scene();
-scene.background=new THREE.Color('#cfe6f2'); scene.fog=new THREE.Fog('#cfe6f2',16,32);
+scene.background=new THREE.Color('#cfe6f2'); scene.fog=new THREE.Fog('#cfe6f2',16,34);
 const camera=new THREE.PerspectiveCamera(45,1,0.1,100);
 const camLook=new THREE.Vector3(0,1,0);
+const cam2=new THREE.PerspectiveCamera(38,1.33,0.1,40);
+const pipLook=new THREE.Vector3();
 camera.position.set(1,5.5,10);
+const portrait=()=>innerWidth<innerHeight;
 function resize(){
   const w=innerWidth,h=innerHeight; renderer.setSize(w,h);
-  camera.aspect=w/h; camera.fov=w<h?62:42;
+  camera.aspect=w/h; camera.fov=portrait()?62:42;
   // 下の選択パネルの分だけ、被写体を画面の上寄りに置く
-  camera.setViewOffset(w,h,0,h*(w<h?0.17:0.12),w,h);
+  camera.setViewOffset(w,h,0,h*(portrait()?0.17:0.12),w,h);
   camera.updateProjectionMatrix();
 }
 addEventListener('resize',resize); resize();
 
 scene.add(new THREE.HemisphereLight('#ffffff','#bba98c',0.85));
-const sun=new THREE.DirectionalLight('#fff3e0',0.75); sun.position.set(4,9,6); sun.castShadow=true;
-sun.shadow.mapSize.set(1024,1024); Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10});
-scene.add(sun);
+const sun=new THREE.DirectionalLight('#fff3e0',0.75); sun.position.set(5,12,8); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20,far:60});
+sun.target.position.set(2,0,4); scene.add(sun.target); scene.add(sun);
 
 const mat=c=>new THREE.MeshStandardMaterial({color:c,flatShading:true,roughness:.85});
 function box(w,h,d,c,x=0,y=0,z=0,parent=scene){
@@ -125,46 +135,69 @@ function cyl(rt,rb,h,c,x,y,z,seg=7,parent=scene){
   const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat(c)); m.position.set(x,y,z);
   m.castShadow=true; m.receiveShadow=true; parent.add(m); return m;
 }
+function plant(x,z,s=1){ cyl(0.22*s,0.17*s,0.45*s,'#c9764b',x,0.22*s,z); const l=new THREE.Mesh(new THREE.IcosahedronGeometry(0.42*s,0),mat('#5fa36a'));
+  l.position.set(x,0.85*s,z); l.castShadow=true; scene.add(l); const l2=l.clone(); l2.scale.setScalar(.7); l2.position.y=1.25*s; scene.add(l2); }
+function chair(x,z,ry,c='#5b6b8c'){
+  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; scene.add(g);
+  box(0.52,0.09,0.5,c,0,0.45,0,g); box(0.52,0.62,0.09,c,0,0.78,-0.22,g);
+  [[-0.22,-0.2],[0.22,-0.2],[-0.22,0.2],[0.22,0.2]].forEach(([a,b])=>box(0.05,0.42,0.05,'#444',a,0.21,b,g));
+}
+function desk(x,z,w=1.4,d=0.7){ box(w,0.06,d,'#efe9df',x,0.74,z); box(0.06,0.72,d-0.05,'#b9b2a6',x-w/2+0.05,0.36,z); box(0.06,0.72,d-0.05,'#b9b2a6',x+w/2-0.05,0.36,z); }
 
-/* ---------- 部屋 ---------- */
+/* ---------- ゾーンA：受付と応接室（会社の看板は話ごとに差し替え） ---------- */
 box(17,0.1,11.5,'#e9dcc6',0,-0.05,0);
 box(17,3.2,0.15,'#f6efe4',0,1.6,-4.65);
 box(0.15,3.2,7.4,'#f1e7d8',-7.6,1.6,-1.9);
 box(0.15,3.2,2.4,'#f1e7d8',-7.6,1.6,4.3);
 box(0.15,0.9,1.2,'#f1e7d8',-7.6,2.75,2.5);
 box(0.2,2.35,0.1,'#9b7653',-7.6,1.17,1.88); box(0.2,2.35,0.1,'#9b7653',-7.6,1.17,3.12);
-box(0.04,0.04,4.5,'#e2d4bd',-7.5,0.9,-2.3);
-// 窓
-box(3.2,1.5,0.06,'#bfe3f5',2.5,1.85,-4.55); box(3.4,0.08,0.12,'#ffffff',2.5,1.08,-4.52);
-box(0.06,1.5,0.08,'#ffffff',2.5,1.85,-4.5);
-// 受付
+box(3.2,1.5,0.06,'#bfe3f5',2.5,1.85,-4.55); box(3.4,0.08,0.12,'#ffffff',2.5,1.08,-4.52); box(0.06,1.5,0.08,'#ffffff',2.5,1.85,-4.5);
 box(2.6,1.05,0.6,'#8a6a4f',-3.5,0.525,-0.45); box(2.8,0.06,0.72,'#f6f2ea',-3.5,1.08,-0.45);
 box(0.3,0.22,0.2,'#d8d2c6',-2.6,1.22,-0.5);
-(function sign(){
-  const c=document.createElement('canvas'); c.width=512; c.height=128; const g=c.getContext('2d');
-  g.fillStyle='#2f3a56'; g.fillRect(0,0,512,128); g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle';
-  g.font='bold 54px sans-serif'; g.fillText('株式会社ストレンジ',256,58);
-  g.font='22px sans-serif'; g.fillText('STRANGE Inc.',256,104);
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.65),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));
-  m.position.set(-3.5,2.35,-4.56); scene.add(m);
-})();
-// 植物
-function plant(x,z){ cyl(0.22,0.17,0.45,'#c9764b',x,0.22,z); const l=new THREE.Mesh(new THREE.IcosahedronGeometry(0.42,0),mat('#5fa36a'));
-  l.position.set(x,0.85,z); l.castShadow=true; scene.add(l); const l2=l.clone(); l2.scale.setScalar(.7); l2.position.y=1.25; scene.add(l2); }
-plant(-0.8,-3.9); plant(5.8,-3.9); plant(-6.8,-3.9);
-// 応接スペース
-box(4.2,0.02,4.6,'#d6e5d3',2.5,0.01,0);
-box(1.8,0.08,1.2,'#fdfaf5',2.5,0.72,0);
-[[-0.8,-0.5],[0.8,-0.5],[-0.8,0.5],[0.8,0.5]].forEach(([dx,dz])=>cyl(0.04,0.04,0.7,'#8a8a8a',2.5+dx,0.35,dz,6));
-function chair(x,z,ry){
-  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; scene.add(g);
-  box(0.52,0.09,0.5,'#5b6b8c',0,0.45,0,g); box(0.52,0.62,0.09,'#5b6b8c',0,0.78,-0.22,g);
-  [[-0.22,-0.2],[0.22,-0.2],[-0.22,0.2],[0.22,0.2]].forEach(([a,b])=>box(0.05,0.42,0.05,'#444',a,0.21,b,g));
+const signCanvas=document.createElement('canvas'); signCanvas.width=512; signCanvas.height=128;
+const signTex=new THREE.CanvasTexture(signCanvas);
+{ const m=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.65),new THREE.MeshBasicMaterial({map:signTex})); m.position.set(-3.5,2.35,-4.56); scene.add(m); }
+function setSign(main,sub,color='#2f3a56'){
+  const g=signCanvas.getContext('2d'); g.fillStyle=color; g.fillRect(0,0,512,128); g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle';
+  g.font='bold 54px sans-serif'; g.fillText(main,256,58); g.font='22px sans-serif'; g.fillText(sub,256,104); signTex.needsUpdate=true;
 }
-chair(2.5,1.5,Math.PI); chair(2.5,-1.5,0); chair(3.75,1.5,Math.PI); chair(1.25,-1.5,0);
+plant(-0.8,-3.9); plant(6.2,-3.9); plant(-6.8,-3.9);
+box(4.6,0.02,4.6,'#d6e5d3',3.0,0.01,0);
+box(2.6,0.08,1.2,'#fdfaf5',3.1,0.72,0);
+[[-1.2,-0.5],[1.2,-0.5],[-1.2,0.5],[1.2,0.5]].forEach(([dx,dz])=>cyl(0.04,0.04,0.7,'#8a8a8a',3.1+dx,0.35,dz,6));
+chair(2.5,1.5,Math.PI); chair(3.75,1.5,Math.PI); chair(2.5,-1.5,0); chair(3.75,-1.5,0);
 
-/* ---------- キャラクター ---------- */
-function person({suit,skin='#f2c9a5',hair,tie,shirt='#ffffff',long=false,name,pitch}){
+/* ---------- 会社の外（ゾーンAの左） ---------- */
+box(9,0.1,11.5,'#cfcac0',-12.2,-0.06,0);
+box(9,0.02,1.4,'#e9e4da',-12.2,0.0,2.5);
+plant(-10.6,-0.6,1.6); plant(-14.5,4.6,1.3);
+
+/* ---------- ゾーンB：ストレンジ社の執務室（x≈13） ---------- */
+box(9.5,0.1,11.5,'#e2e4dc',13.2,-0.05,0);
+box(9.5,3.2,0.15,'#f1f0ea',13.2,1.6,-4.65);
+box(0.12,1.8,5.6,'#cfd8e3',8.4,0.9,-1.85);
+box(3.4,1.4,0.06,'#bfe3f5',13.2,1.9,-4.55);
+desk(12,0.55); desk(13.6,0.55); desk(13,-2.0,1.8,0.8);
+box(0.5,0.34,0.05,'#2b2f38',11.6,0.98,0.4); box(0.5,0.34,0.05,'#2b2f38',13.9,0.98,0.4); box(0.5,0.34,0.05,'#2b2f38',12.4,0.98,-2.25);
+box(0.2,0.07,0.16,'#f4f4f4',12.5,0.8,0.45);
+chair(12,1.25,Math.PI,'#3f6b5c'); chair(13.6,1.25,Math.PI,'#3f6b5c'); chair(13,-2.6,0,'#3a3a44');
+plant(16.8,-3.9); plant(9.2,-3.9,0.9);
+
+/* ---------- ゾーンC：学生の部屋（z≈16） ---------- */
+box(6.5,0.1,5.4,'#e8d6c2',0,-0.05,16.2);
+box(6.5,3,0.15,'#f6e9ef',0,1.5,13.5);
+box(0.15,3,5.4,'#f3e3ea',-3.25,1.5,16.2);
+box(1.6,1.1,0.06,'#bfe3f5',1.3,1.8,13.6);
+desk(-1.6,14.15,1.3,0.6); box(0.45,0.03,0.32,'#5c6470',-1.6,0.78,14.15); box(0.45,0.3,0.02,'#5c6470',-1.6,0.94,14.0);
+box(0.21,0.005,0.3,'#fffbe8',-1.05,0.775,14.2);
+box(1.3,0.45,2.1,'#c8d7f0',2.2,0.23,16.4); box(1.3,0.1,0.5,'#ffffff',2.2,0.5,15.6);
+box(0.7,0.9,0.02,'#ffd166',-1.6,1.9,13.58);
+chair(-1.6,14.8,Math.PI,'#d08770');
+
+/* =========================================================
+   キャラクター（肩・ひじ・ひざの関節つき）
+   ========================================================= */
+function person({suit,skin='#f2c9a5',hair,tie,shirt='#ffffff',long=false,name,pitch,grey=false}){
   const p=new THREE.Group(); scene.add(p);
   const hips=new THREE.Group(); hips.position.y=0.85; p.add(hips);
   const leg=(sx)=>{ const th=new THREE.Group(); th.position.x=sx; hips.add(th);
@@ -179,24 +212,31 @@ function person({suit,skin='#f2c9a5',hair,tie,shirt='#ffffff',long=false,name,pi
   const head=new THREE.Group(); head.position.y=0.8; torso.add(head);
   const hm=new THREE.Mesh(new THREE.IcosahedronGeometry(0.16,1),mat(skin)); hm.castShadow=true; head.add(hm);
   box(0.34,0.11,0.34,hair,0,0.12,-0.01,head); box(0.34,0.2,0.1,hair,0,0.03,-0.13,head);
+  if(grey){ box(0.05,0.12,0.2,'#cfcfcf',0.165,0.0,-0.02,head); box(0.05,0.12,0.2,'#cfcfcf',-0.165,0.0,-0.02,head); }
   if(long) box(0.36,0.42,0.12,hair,0,-0.1,-0.13,head);
   const eyes=[box(0.035,0.045,0.02,'#2a2523',0.06,0.01,0.145,head),box(0.035,0.045,0.02,'#2a2523',-0.06,0.01,0.145,head)];
   box(0.06,0.014,0.02,'#b5574b',0,-0.07,0.145,head);
   const arm=(sx)=>{ const a=new THREE.Group(); a.position.set(sx,0.58,0); torso.add(a);
-    box(0.12,0.58,0.14,suit,0,-0.29,0,a); const h=new THREE.Mesh(new THREE.IcosahedronGeometry(0.06,0),mat(skin)); h.position.y=-0.62; a.add(h); return a; };
-  const armL=arm(0.3), armR=arm(-0.3);
-  p.u={hips,torso,head,armL,armR,thL,thR,knL,knR,eyes};
+    box(0.12,0.31,0.14,suit,0,-0.15,0,a); const el=new THREE.Group(); el.position.y=-0.3; a.add(el);
+    box(0.11,0.3,0.13,suit,0,-0.15,0,el);
+    const h=new THREE.Mesh(new THREE.IcosahedronGeometry(0.06,0),mat(skin)); h.position.y=-0.33; el.add(h); return [a,el]; };
+  const [armL,elL]=arm(0.3), [armR,elR]=arm(-0.3);
+  const ph=box(0.075,0.15,0.03,'#15151a',0,-0.36,0.06,elR); ph.visible=false;
+  p.u={hips,torso,head,armL,armR,elL,elR,thL,thR,knL,knR,eyes,phone:ph};
   p.name=name; p.pitch=pitch; p.blink=Math.random()*4;
   return p;
 }
 const P=person({suit:'#2f3a56',hair:'#2b2420',tie:'#c0392b',name:'あなた（田中）',pitch:1.05});
 const U=person({suit:'#7a9cc0',hair:'#4a3326',long:true,shirt:'#fdf3e7',name:'受付',pitch:1.45});
 const S=person({suit:'#3d3d45',hair:'#6b6b6b',tie:'#2e6fb5',name:'人事部 鈴木様',pitch:0.75});
+const Y=person({suit:'#4a3f38',hair:'#2f2f2f',tie:'#7a3e9d',grey:true,name:'山田部長（あなたの上司）',pitch:0.62});
+const C=person({suit:'#27495e',hair:'#5a3b28',long:true,shirt:'#eef4f8',name:'みらい商事 佐藤様',pitch:1.25});
+const ACTORS={P,U,S,Y,C};
 
 /* ---------- 小道具 ---------- */
 const bag=box(0.42,0.3,0.1,'#1f1f24');
-const phone=box(0.075,0.14,0.012,'#111');
 const card=box(0.1,0.006,0.06,'#ffffff');
+const doc=box(0.24,0.012,0.32,'#e7f0fb');
 
 /* =========================================================
    トゥイーン・アニメーション
@@ -211,53 +251,73 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const all=(...a)=>Promise.all(a);
 const D=Math.PI/180;
 
+// 腕のポーズ：[肩の前後, 肩の開き, ひじ]
+const ARM={down:[0,0.05,0], fwd:[-0.5,-0.22,-1.0], phone:[-0.75,-0.12,-2.45], look:[-0.35,-0.1,-1.35]};
+function armTo(p,side,name,ms=420){
+  const [x,z,e]=ARM[name], a=side==='R'?p.u.armR:p.u.armL, el=side==='R'?p.u.elR:p.u.elL, s=side==='R'?-1:1;
+  return all(tw(a.rotation,'x',x,ms),tw(a.rotation,'z',z*s,ms),tw(el.rotation,'x',e,ms));
+}
+function armSet(p,side,name){ const [x,z,e]=ARM[name], s=side==='R'?-1:1;
+  (side==='R'?p.u.armR:p.u.armL).rotation.set(x,0,z*s); (side==='R'?p.u.elR:p.u.elL).rotation.set(e,0,0); }
+const armsFwd=(p,both=true)=>all(armTo(p,'R','fwd'),both?armTo(p,'L','fwd'):0);
+const armsDown=p=>all(armTo(p,'R','down'),armTo(p,'L','down'));
+async function phoneUp(p){ p.u.phone.visible=true; await armTo(p,'R','phone'); }
+async function phoneDown(p){ await armTo(p,'R','down'); p.u.phone.visible=false; }
+async function phoneLook(p){ p.u.phone.visible=true; await all(armTo(p,'R','look'),tw(p.u.head.rotation,'x',0.4,400)); }
+
 const sit=(p,ms=550)=>all(tw(p.u.hips.position,'y',0.52,ms),tw(p.u.thL.rotation,'x',-1.57,ms),tw(p.u.thR.rotation,'x',-1.57,ms),tw(p.u.knL.rotation,'x',1.57,ms),tw(p.u.knR.rotation,'x',1.57,ms),tw(p.u.torso.rotation,'x',0,ms));
-const stand=(p,ms=500)=>all(tw(p.u.hips.position,'y',0.85,ms),tw(p.u.thL.rotation,'x',0,ms),tw(p.u.thR.rotation,'x',0,ms),tw(p.u.knL.rotation,'x',0,ms),tw(p.u.knR.rotation,'x',0,ms),tw(p.u.torso.rotation,'x',0,ms));
+const stand=(p,ms=500)=>all(tw(p.u.hips.position,'y',0.85,ms),tw(p.u.thL.rotation,'x',0,ms),tw(p.u.thR.rotation,'x',0,ms),tw(p.u.thR.rotation,'y',0,ms),tw(p.u.knL.rotation,'x',0,ms),tw(p.u.knR.rotation,'x',0,ms),tw(p.u.torso.rotation,'x',0,ms));
 async function bow(p,deg,hold=450){ await tw(p.u.torso.rotation,'x',deg*D,520+deg*8); await wait(hold); await tw(p.u.torso.rotation,'x',0,600); }
 async function nod(p){ await tw(p.u.head.rotation,'x',0.3,220); await tw(p.u.head.rotation,'x',0,260); }
-const armsFwd=(p,both=true,ms=450)=>all(tw(p.u.armR.rotation,'x',-1.15,ms),tw(p.u.armR.rotation,'z',0.28,ms),
-  both?tw(p.u.armL.rotation,'x',-1.15,ms):0,both?tw(p.u.armL.rotation,'z',-0.28,ms):0);
-const armsDown=(p,ms=450)=>all(tw(p.u.armR.rotation,'x',0,ms),tw(p.u.armR.rotation,'z',-0.05,ms),tw(p.u.armL.rotation,'x',0,ms),tw(p.u.armL.rotation,'z',0.05,ms));
-async function wave(p){ await tw(p.u.armR.rotation,'z',-2.5,300); for(let i=0;i<3;i++){ await tw(p.u.armR.rotation,'z',-2.2,160); await tw(p.u.armR.rotation,'z',-2.7,160);} await tw(p.u.armR.rotation,'z',-0.05,300); }
+async function wave(p){ await all(tw(p.u.armR.rotation,'z',-2.5,300),tw(p.u.elR.rotation,'x',-0.4,300)); for(let i=0;i<3;i++){ await tw(p.u.armR.rotation,'z',-2.2,160); await tw(p.u.armR.rotation,'z',-2.7,160);} await armTo(p,'R','down',300); }
 function turnTo(p,ry,ms=320){ const c=p.rotation.y; const d=((ry-c+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI; return tw(p.rotation,'y',c+d,ms); }
 function face(p,q){ return turnTo(p,Math.atan2(q.position.x-p.position.x,q.position.z-p.position.z)); }
 async function walk(p,x,z,speed=1.7){
   const dx=x-p.position.x, dz=z-p.position.z, dist=Math.hypot(dx,dz); if(dist<0.01) return;
   await turnTo(p,Math.atan2(dx,dz)); p.walking=true;
   const ms=dist/speed*1000; await all(tw(p.position,'x',x,ms),tw(p.position,'z',z,ms));
-  p.walking=false; p.u.thL.rotation.x=p.u.thR.rotation.x=0; p.u.armL.rotation.x=p.u.armR.rotation.x=0; p.u.hips.position.y=0.85;
+  p.walking=false; p.u.thL.rotation.x=p.u.thR.rotation.x=0; p.u.hips.position.y=0.85;
+  if(!p.u.phone.visible){ p.u.armL.rotation.x=0; p.u.armR.rotation.x=0; }
 }
-function moveZ(p,z,ms=400){ return tw(p.position,'z',z,ms); }
+const moveZ=(p,z,ms=400)=>tw(p.position,'z',z,ms);
 
-// 小道具の付け替え（見た目の位置を保ったまま親を変える）
 function attachTo(obj,parent,x,y,z){ obj.visible=true; parent.add(obj); obj.position.set(x,y,z); obj.rotation.set(0,0,0); }
 async function moveProp(obj,x,y,z,ms=450){ obj.visible=true; scene.attach(obj); await all(tw(obj.position,'x',x,ms),tw(obj.position,'y',y,ms),tw(obj.position,'z',z,ms),tw(obj.rotation,'x',0,ms),tw(obj.rotation,'y',0,ms),tw(obj.rotation,'z',0,ms)); }
-async function handTo(obj,arm,ms=400){ arm.attach(obj); await all(tw(obj.position,'x',0,ms),tw(obj.position,'y',-0.66,ms),tw(obj.position,'z',0.07,ms)); }
+async function handTo(obj,p,ms=400){ p.u.elR.attach(obj); await all(tw(obj.position,'x',0,ms),tw(obj.position,'y',-0.38,ms),tw(obj.position,'z',0.07,ms)); }
 
-/* ---------- 状態を一気にセット（お手本の巻き戻し用） ---------- */
-function pose(p,{x,z,ry,sit:s=false,vis=true,arms='down'}){
-  p.visible=vis; p.walking=false; p.position.set(x,0,z); p.rotation.set(0,ry,0);
+/* ---------- 状態を一気にセット（場面の頭出し・お手本の巻き戻し用） ---------- */
+function pose(p,o){
+  if(!o){ p.visible=false; p.position.set(0,0,-30); return; }
+  const {x,z,ry=0,sit:s=false,arms='down'}=o;
+  p.visible=true; p.walking=false; p.position.set(x,0,z); p.rotation.set(0,ry,0);
   const u=p.u; u.hips.position.y=s?0.52:0.85;
   u.thL.rotation.set(s?-1.57:0,0,0); u.thR.rotation.set(s?-1.57:0,0,0);
   u.knL.rotation.set(s?1.57:0,0,0); u.knR.rotation.set(s?1.57:0,0,0);
   u.torso.rotation.set(0,0,0); u.head.rotation.set(0,0,0);
-  if(arms==='fwd'){ u.armR.rotation.set(-1.15,0,0.28); u.armL.rotation.set(-1.15,0,-0.28); }
-  else { u.armR.rotation.set(0,0,-0.05); u.armL.rotation.set(0,0,0.05); }
+  armSet(p,'L',arms==='fwd'?'fwd':'down'); armSet(p,'R',arms);
+  u.phone.visible=arms==='phone'||arms==='look';
+  if(arms==='look') u.head.rotation.x=0.4;
+}
+const PROP_SPOTS={
+  bag:{floor:[2.0,0.15,1.55]},
+  card:{table:[2.5,0.765,0.4]},
+  doc:{table:[2.6,0.775,0.25],given:[3.6,0.775,-0.25]},
+};
+function placeProp(obj,where,name){
+  if(!where||where==='none'){ obj.visible=false; return; }
+  if(ACTORS[where]){ attachTo(obj,ACTORS[where].u.elR,0,-0.38,0.07); return; }
+  const s=PROP_SPOTS[name][where]; attachTo(obj,scene,s[0],s[1],s[2]);
 }
 function applyState(st){
   TW=[];
-  pose(P,st.P); pose(U,st.U||{x:-3.5,z:-1.15,ry:0}); pose(S,st.S||{x:6.2,z:-3.9,ry:0,vis:false});
-  if(st.bag==='hand') attachTo(bag,P.u.armL,0,-0.8,0);
-  else if(st.bag==='floor') attachTo(bag,scene,2.0,0.15,1.55);
-  else if(st.bag==='chair') attachTo(bag,scene,3.75,0.65,1.5);
-  phone.visible=false; attachTo(phone,P.u.armR,0,-0.66,0.07); phone.visible=false;
-  if(st.card==='S') attachTo(card,S.u.armR,0,-0.66,0.07);
-  else if(st.card==='table') attachTo(card,scene,2.5,0.765,0.4);
-  else card.visible=false;
+  for(const k in ACTORS) pose(ACTORS[k],st[k]);
+  if(st.bag&&ACTORS[st.bag]) attachTo(bag,ACTORS[st.bag].u.elL,0,-0.5,0); else placeProp(bag,st.bag,'bag');
+  placeProp(card,st.card,'card'); placeProp(doc,st.doc,'doc');
+  setPip(st.pip||null);
 }
 
 /* =========================================================
-   カメラ
+   カメラ（メイン＋電話の小窓）
    ========================================================= */
 const CAMS={
   wide:[[1,5.5,10],[0,0.6,0]],
@@ -267,17 +327,44 @@ const CAMS={
   card:[[4.6,1.7,0.6],[2.5,1.1,0]],
   overS:[[1.5,2.25,-4.0],[2.6,0.95,1.2]],
   door:[[-3.2,2.1,5.4],[-6.6,1.1,2.4]],
+  side4:[[6.8,2.1,0.4],[3.1,0.95,0]],
+  overC:[[3.6,2.3,-4.0],[3.1,0.95,1.2]],
+  outside:[[-8.6,1.9,6.6],[-10.0,1.0,2.6]],
+  room2:[[0.6,1.9,19.6],[0,1.0,15.3]],
+  desk:[[14.2,1.85,-0.4],[12.0,0.95,1.1]],
+  boss:[[15.6,2.0,-0.9],[13,1.0,-1.8]],
+  officeWide:[[13,4.2,7.5],[12.8,0.6,-0.6]],
+  farewell:[[11.6,1.9,4.8],[11.6,1.0,1.2]],
 };
-// 縦長の画面では、二人が横に離れすぎないよう斜め45°寄りから撮る
+// 縦長の画面では、ふたりが左右に離れすぎないよう斜めから撮る
 const CAMS_PORTRAIT={
   side:[[5.5,2.5,3.7],[2.5,0.95,-0.1]],
   card:[[4.2,1.95,2.7],[2.5,1.1,-0.1]],
+  side4:[[6.0,2.5,4.0],[3.1,0.95,-0.1]],
+  boss:[[15.0,2.2,1.4],[13,1.0,-1.9]],
 };
-const cam=name=>(innerWidth<innerHeight&&CAMS_PORTRAIT[name])||CAMS[name];
+const PIPS={
+  U:[[-3.5,1.65,0.7],[-3.5,1.45,-1.15],'受付'],
+  S:[[13,1.42,-1.0],[13,1.25,-2.6],'人事部 鈴木様'],
+  C:[[0.6,1.68,-1.4],[0.6,1.5,-3.0],'みらい商事 佐藤様'],
+};
+const cam=name=>(portrait()&&CAMS_PORTRAIT[name])||CAMS[name];
 function camTo(name,ms=1100){
   const [p,l]=cam(name);
   return all(tw(camera.position,'x',p[0],ms),tw(camera.position,'y',p[1],ms),tw(camera.position,'z',p[2],ms),
     tw(camLook,'x',l[0],ms),tw(camLook,'y',l[1],ms),tw(camLook,'z',l[2],ms));
+}
+function camSet(name){ const [p,l]=cam(name); camera.position.set(...p); camLook.set(...l); }
+let pip=null;
+const pipFrame=document.getElementById('pipFrame'), pipLabel=document.getElementById('pipLabel');
+function setPip(key){
+  pip=key?{actor:ACTORS[key],key}:null; pipFrame.hidden=!pip;
+  if(!pip) return;
+  const [p,l,label]=PIPS[key]; cam2.position.set(...p); pipLook.set(...l); pipLabel.textContent='📞 '+label;
+}
+function pipRect(){
+  const w=innerWidth, pw=Math.round(Math.min(w*0.44,260)), ph=Math.round(pw*0.72);
+  return {x:w-pw-12,y:62,w:pw,h:ph};
 }
 
 /* =========================================================
@@ -289,7 +376,7 @@ try{ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }catch(e){}
 function tts(text,pitch){
   return new Promise(res=>{
     if(!soundOn||!('speechSynthesis' in window)) return res();
-    try{ const u=new SpeechSynthesisUtterance(text); u.lang='ja-JP'; if(VOICE) u.voice=VOICE; u.pitch=pitch; u.rate=1.05;
+    try{ const u=new SpeechSynthesisUtterance(text.replace(/[（(].*?[）)]/g,'')); u.lang='ja-JP'; if(VOICE) u.voice=VOICE; u.pitch=pitch; u.rate=1.05;
       u.onend=u.onerror=()=>res(); speechSynthesis.speak(u); }catch(e){ res(); }
   });
 }
@@ -298,8 +385,9 @@ function tag(p,el){ overlay.appendChild(el); tags.set(el,p); return el; }
 function untag(el){ tags.delete(el); el.remove(); }
 let skipper=null;
 const hintEl=document.getElementById('hint');
-async function say(p,text){
-  const el=document.createElement('div'); el.className='bubble'; el.innerHTML=`<span class="who">${p.name}</span>${text}`; el.dataset.y='0.5'; tag(p,el);
+async function say(p,text,who){
+  const el=document.createElement('div'); el.className='bubble'+(pip&&p===pip.actor?' tel':'');
+  el.innerHTML=`<span class="who">${who||p.name}</span>${text}`; el.dataset.y='0.5'; tag(p,el);
   hintEl.style.opacity=1;
   const skip=new Promise(r=>skipper=r);
   await Promise.race([all(tts(text,p.pitch),wait(Math.max(1100,text.length*105))),wait(text.length*260+2500),skip]);
@@ -308,44 +396,77 @@ async function say(p,text){
 }
 stage.addEventListener('pointerdown',()=>{ if(skipper) skipper(); });
 function emote(p,e){ const el=document.createElement('div'); el.className='emo'; el.textContent=e; el.dataset.y='0.42'; tag(p,el); setTimeout(()=>untag(el),1300); }
+const captionEl=document.getElementById('captionEl');
+async function caption(text,ms=1800){ captionEl.textContent=text; captionEl.style.opacity=1; await wait(ms); captionEl.style.opacity=0; await wait(300); }
 const v3=new THREE.Vector3();
 function placeTags(){
+  const r=pip&&pipRect();
   for(const [el,p] of tags){
     if(!p.visible){ el.style.display='none'; continue; }
-    p.u.head.getWorldPosition(v3); v3.y+=+el.dataset.y; v3.project(camera);
-    if(v3.z>1){ el.style.display='none'; continue; }
-    el.style.display=''; el.style.left=((v3.x+1)/2*innerWidth)+'px'; el.style.top=((1-v3.y)/2*innerHeight)+'px';
+    p.u.head.getWorldPosition(v3); v3.y+=+el.dataset.y;
+    let x,y;
+    if(pip&&p===pip.actor){ v3.y-=0.2; v3.project(cam2); x=r.x+(v3.x+1)/2*r.w; y=r.y+(1-v3.y)/2*r.h; y=Math.max(y,r.y+r.h*0.35); x=Math.min(x,innerWidth-120); }
+    else { v3.project(camera); if(v3.z>1){ el.style.display='none'; continue; } x=(v3.x+1)/2*innerWidth; y=(1-v3.y)/2*innerHeight; }
+    el.style.display=''; el.style.left=x+'px'; el.style.top=y+'px';
   }
 }
 
 /* =========================================================
    ループ
    ========================================================= */
-let last=performance.now();
 function loop(now){
   for(const t of TW.slice()){
     const k=Math.min(1,(now-t.t0)/t.ms); t.obj[t.key]=t.from+(t.to-t.from)*ease(k);
     if(k>=1){ TW.splice(TW.indexOf(t),1); t.r(); }
   }
   const s=now/1000;
-  for(const p of [P,U,S]){
-    if(p.walking){ const a=Math.sin(s*9)*0.45; p.u.thL.rotation.x=a; p.u.thR.rotation.x=-a; p.u.armL.rotation.x=-a*.5; p.u.armR.rotation.x=a*.5; p.u.hips.position.y=0.85+Math.abs(Math.cos(s*9))*0.03; }
+  for(const p of Object.values(ACTORS)){
+    if(p.walking){ const a=Math.sin(s*9)*0.45; p.u.thL.rotation.x=a; p.u.thR.rotation.x=-a; p.u.armL.rotation.x=-a*.5; if(!p.u.phone.visible) p.u.armR.rotation.x=a*.5; p.u.hips.position.y=0.85+Math.abs(Math.cos(s*9))*0.03; }
     const b=(s+p.blink)%4<0.12; p.u.eyes.forEach(e=>e.scale.y=b?0.15:1);
   }
+  const w=innerWidth,h=innerHeight;
   camera.lookAt(camLook);
-  renderer.render(scene,camera); placeTags(); requestAnimationFrame(loop);
+  renderer.setScissorTest(false); renderer.setViewport(0,0,w,h); renderer.render(scene,camera);
+  if(pip){
+    const r=pipRect(); cam2.aspect=r.w/r.h; cam2.updateProjectionMatrix(); cam2.lookAt(pipLook);
+    renderer.setScissorTest(true); renderer.setScissor(r.x,h-r.y-r.h,r.w,r.h); renderer.setViewport(r.x,h-r.y-r.h,r.w,r.h);
+    renderer.render(scene,cam2); renderer.setScissorTest(false);
+    Object.assign(pipFrame.style,{left:(r.x-3)+'px',top:(r.y-3)+'px',width:r.w+'px',height:r.h+'px'});
+  }
+  placeTags(); requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
 /* =========================================================
-   シナリオ：第1話 企業訪問
-   opts の ok:true が正解。act は選んだ行動のアニメーション、react は相手の反応。
+   シナリオ
+   各ステップ：state＝頭出しの状態／opts の ok:true が正解／act＝選んだ行動／react＝相手のひと言／after＝次の場面へのつなぎ
    ========================================================= */
-const SEAT_P={x:2.5,z:1.5,ry:Math.PI,sit:true}, STAND_P={x:2.5,z:1.15,ry:Math.PI};
+const R180=Math.PI, R90=Math.PI/2;
+// 第1話・第4話の応接室の立ち位置
+const SEAT_P={x:2.5,z:1.5,ry:R180,sit:true}, STAND_P={x:2.5,z:1.15,ry:R180};
 const SEAT_S={x:2.5,z:-1.5,ry:0,sit:true}, STAND_S={x:2.5,z:-1.15,ry:0};
-const STEPS=[
+const SEAT_Y={x:3.75,z:1.5,ry:R180,sit:true}, STAND_Y={x:3.75,z:1.15,ry:R180};
+const SEAT_C={x:3.75,z:-1.5,ry:0,sit:true}, STAND_C={x:3.75,z:-1.15,ry:0};
+const RECEP_U={x:-3.5,z:-1.15,ry:0};
+// 第3話・第5話の執務室
+const DESK_P={x:12,z:1.25,ry:R180,sit:true}, BOSS_Y={x:13,z:-2.6,ry:0,sit:true}, BEFORE_Y={x:13,z:-1.15,ry:R180};
+const CALLER_C={x:0.6,z:-3.0,ry:0};
+// 第2話
+const ROOM_P={x:0,z:15.6,ry:0};
+const ph=o=>({...o,arms:'phone'});
+
+const CHAPTERS=[
+/* ---------------- 第1話 ---------------- */
+{ id:'visit', no:1, title:'企業訪問・面談', sub:'受付 → 名刺交換 → 面談 → 退出', sign:['株式会社ストレンジ','STRANGE Inc.'],
+  base:{U:RECEP_U},
+  prelude:async()=>{
+    applyState({U:RECEP_U,P:{x:-8.4,z:2.5,ry:R90},bag:'P',card:'S'}); camSet('wide');
+    await wait(300); camTo('recep',2600); await walk(P,-3.5,0.95); await turnTo(P,R180);
+    await say(U,'いらっしゃいませ。');
+  },
+  steps:[
  { title:'受付でのあいさつ', cam:'recep', npc:U,
-   state:{P:{x:-3.5,z:0.95,ry:Math.PI},bag:'hand',card:'S'},
+   state:{P:{x:-3.5,z:0.95,ry:R180},bag:'P',card:'S'},
    q:'受付に着いた。今は13:50、14時から人事部の鈴木様と面談の約束。最初になんと言う？',
    opts:[
     {t:'「お世話になっております。山形大学の田中と申します。本日14時に、人事部の鈴木様とお約束をいただいております。」',ok:true,
@@ -359,10 +480,10 @@ const STEPS=[
      why:'午後なのに「おはようございます」はアルバイト式でNG（資料より）。名前も約束の相手も伝わりません。'},
    ],
    after:async()=>{ await say(U,'田中様ですね。お待ちしておりました。応接室へご案内いたします。'); camTo('room',1600); await walk(P,2.5,2.25);
-     await turnTo(P,Math.PI); await say(U,'こちらにお掛けになって、少々お待ちください。'); } },
+     await turnTo(P,R180); await say(U,'こちらにお掛けになって、少々お待ちください。'); } },
 
  { title:'応接室での待ち方', cam:'room', npc:U,
-   state:{P:{x:2.5,z:2.25,ry:Math.PI},bag:'hand',card:'S'},
+   state:{P:{x:2.5,z:2.25,ry:R180},bag:'P',card:'S'},
    q:'応接室に案内され「お掛けになってお待ちください」と言われた。どうする？',
    opts:[
     {t:'「失礼いたします」と言って座り、カバンは足元に置く',ok:true,
@@ -372,7 +493,7 @@ const STEPS=[
      act:async()=>{ await moveZ(P,1.5); await sit(P); await moveProp(bag,3.75,0.65,1.5); },
      why:'カバンを椅子の上に置くのはNG。足元に置きましょう。'},
     {t:'座らずに、部屋の中をうろうろ見て回る',
-     act:async()=>{ await walk(P,4.6,0.6); await walk(P,0.6,-1.6); await walk(P,2.5,2.25); await turnTo(P,Math.PI); },
+     act:async()=>{ await walk(P,5.4,0.6); await walk(P,0.6,-2.4); await walk(P,2.5,2.25); await turnTo(P,R180); },
      why:'勧められたら座って静かに待ちます。勝手に歩き回ると落ち着きのない印象に。'},
    ] },
 
@@ -384,13 +505,13 @@ const STEPS=[
      act:async()=>{ await nod(P); await wait(500); },
      why:'マナーモードでもバイブ音が響くことがあるので、会社に入ったら<b>電源OFF</b>がおすすめ。待ち時間のスマホいじりも慎みます。'},
     {t:'マナーモードにして、ちょっとだけSNSをチェック',
-     act:async()=>{ phone.visible=true; await all(tw(P.u.armR.rotation,'x',-1.5,400),tw(P.u.head.rotation,'x',0.4,400)); await wait(1400); },
+     act:async()=>{ await phoneLook(P); await wait(1400); },
      why:'担当者が来るまで、スマホはチェックせず静かに待ちましょう。'},
     {t:'足を組んで、スマホでゲームの続き',
-     act:async()=>{ phone.visible=true; await all(tw(P.u.thR.rotation,'x',-1.95,400),tw(P.u.thR.rotation,'y',0.35,400),tw(P.u.armR.rotation,'x',-1.5,400),tw(P.u.head.rotation,'x',0.4,400)); await wait(1400); },
+     act:async()=>{ await all(tw(P.u.thR.rotation,'x',-1.95,400),tw(P.u.thR.rotation,'y',0.35,400),phoneLook(P)); await wait(1400); },
      why:'足組み・携帯いじりは、印象を悪くする<b>非言語コミュニケーション</b>の代表例です。'},
    ],
-   after:async()=>{ camTo('side',1400); S.visible=true; S.position.set(6.2,0,-3.9); await walk(S,2.5,-1.15); await turnTo(S,0);
+   after:async()=>{ camTo('side',1400); pose(S,{x:6.2,z:-3.9}); await walk(S,2.5,-1.15); await turnTo(S,0);
      await say(S,'お待たせいたしました。人事部の鈴木です。'); } },
 
  { title:'入室時のあいさつ', cam:'side', npc:S,
@@ -414,13 +535,13 @@ const STEPS=[
    q:'鈴木様が名刺を差し出した。どう受け取る？',
    opts:[
     {t:'両手で受け取り、「頂戴いたします」と軽くお辞儀',ok:true,
-     act:async()=>{ await armsFwd(P); await handTo(card,P.u.armR); armsDown(S); await say(P,'頂戴いたします。'); await bow(P,15,200); },
+     act:async()=>{ await armsFwd(P); await handTo(card,P); armsDown(S); await say(P,'頂戴いたします。'); await bow(P,15,200); },
      why:'名刺は<b>両手</b>で受け取り「頂戴いたします」（「受け取る」の謙譲語）。受け取った名刺は、面談中はテーブルの上に置いておきます。'},
     {t:'片手でさっと受け取り「どうも」',
-     act:async()=>{ await armsFwd(P,false); await handTo(card,P.u.armR); armsDown(S); await say(P,'どうも。'); },
+     act:async()=>{ await armsFwd(P,false); await handTo(card,P); armsDown(S); await say(P,'どうも。'); },
      why:'片手で受け取るのは失礼。「どうも」もくだけすぎです。'},
     {t:'「いただきます！」と受け取って、すぐポケットにしまう',
-     act:async()=>{ await armsFwd(P,false); await handTo(card,P.u.armR); armsDown(S); await say(P,'いただきます！'); await armsDown(P); card.visible=false; },
+     act:async()=>{ await armsFwd(P,false); await handTo(card,P); armsDown(S); await say(P,'いただきます！'); await armsDown(P); card.visible=false; },
      react:'（あ、しまわれちゃった…）',
      why:'「いただきます」は食事のあいさつに聞こえます。名刺をすぐしまうのも×。面談中はテーブルに置いておきます。'},
    ],
@@ -482,11 +603,11 @@ const STEPS=[
      act:async()=>{ await all(stand(P),moveZ(P,1.15,400)); await all(say(P,'ありがとうございましたー。'),walk(P,0.3,2.0)); },
      why:'歩きながらの挨拶・お辞儀はNG。立ち止まって、相手の方を向いて挨拶します。'},
    ],
-   after:async()=>{ await all(stand(S),moveZ(S,-1.15,500)); await bow(S,30); card.visible=false; attachTo(bag,P.u.armL,0,-0.8,0);
-     camTo('door',2200); await walk(P,-6.9,2.5); await turnTo(P,Math.PI/2); await face(S,P); } },
+   after:async()=>{ await all(stand(S),moveZ(S,-1.15,500)); await bow(S,30); card.visible=false; attachTo(bag,P.u.elL,0,-0.5,0);
+     camTo('door',2200); await walk(P,-6.9,2.5); await turnTo(P,R90); await face(S,P); } },
 
  { title:'退出のあいさつ', cam:'door', npc:S,
-   state:{P:{x:-6.9,z:2.5,ry:Math.PI/2},S:{x:2.5,z:-1.15,ry:Math.atan2(-9.4,3.65)},bag:'hand',card:'none'},
+   state:{P:{x:-6.9,z:2.5,ry:R90},S:{x:2.5,z:-1.15,ry:Math.atan2(-9.4,3.65)},bag:'P',card:'none'},
    q:'ドアの前。部屋を出る前に…',
    opts:[
     {t:'振り返って「失礼いたします。」と言ってから、会釈して退出',ok:true,
@@ -500,6 +621,572 @@ const STEPS=[
      why:'「さようなら」と手を振るのは友だち向け。「失礼いたします」が正解です。'},
    ],
    after:async()=>{ await walk(P,-8.4,2.5); P.visible=false; await wait(300); } },
+  ] },
+
+/* ---------------- 第2話 ---------------- */
+{ id:'appo', no:2, title:'電話でアポ取り', sub:'学生の部屋から、企業見学の日程を決める', sign:['株式会社ストレンジ','STRANGE Inc.'],
+  prelude:async()=>{
+    applyState({P:ROOM_P}); camera.position.set(0.6,3.2,22); camLook.set(0,1,15.3);
+    await camTo('room2',1800); await caption('企業見学のアポを取るため、人事部に電話をかけることに。');
+  },
+  steps:[
+ { title:'電話をかける前に', cam:'room2', npc:null,
+   state:{P:ROOM_P},
+   q:'企業見学のアポを取る電話。どこで、どうかける？',
+   opts:[
+    {t:'静かな自分の部屋で、伝える要点を書いたメモを見ながらかける',ok:true,
+     act:async()=>{ await walk(P,-1.05,14.9); await turnTo(P,R180); await nod(P); await walk(P,0,15.6); await turnTo(P,0); },
+     why:'電話は<b>静かな場所</b>で、<b>伝えるべき要点を書いたメモ</b>を見ながら話します（資料より）。'},
+    {t:'駅のホームで、歩きながらかける',
+     act:async()=>{ await phoneUp(P); await say(P,'（ガタンゴトン…プシュー）','📢 駅の音'); await walk(P,1.6,15.6); await walk(P,-1.4,15.6); await walk(P,0,15.6); await turnTo(P,0); await phoneDown(P); },
+     why:'騒がしい場所だと相手の声も自分の声も聞き取れません。静かな場所でかけましょう。'},
+    {t:'メモは用意せず、思いついたことをそのまま話す',
+     act:async()=>{ await nod(P); await say(P,'（なんとかなるでしょ…）','あなたの心の声'); },
+     why:'緊張すると要点が抜けがち。日時・用件・候補日などをメモにして、見ながら話します。'},
+   ],
+   after:async()=>{ await phoneUp(P); await say(P,'（プルルル…プルルル…）','📞 呼び出し中'); pose(U,ph(RECEP_U)); setPip('U');
+     await say(U,'お電話ありがとうございます。株式会社ストレンジでございます。'); } },
+
+ { title:'名乗り方', cam:'room2', npc:U,
+   state:{P:ph(ROOM_P),U:ph(RECEP_U),pip:'U'},
+   q:'受付の方が電話に出た。最初になんと言う？',
+   opts:[
+    {t:'「お忙しいところ恐れ入ります。山形大学経済学部の田中と申します。」',ok:true,
+     act:async()=>{ await say(P,'お忙しいところ恐れ入ります。山形大学経済学部の田中と申します。'); },
+     why:'<b>自分から名乗り、挨拶する</b>のが基本。「お忙しいところ恐れ入ります」はクッション言葉（資料より）。'},
+    {t:'「もしもし、田中ですけど。」',
+     act:async()=>{ await say(P,'もしもし、田中ですけど。'); }, react:'…失礼ですが、どちらの田中様でしょうか？',
+     why:'「もしもし」はビジネスの電話では使いません。所属（大学・学部）も名乗りましょう。'},
+    {t:'「あ、すみません、インターンの件なんですけど…」',
+     act:async()=>{ await say(P,'あ、すみません、インターンの件なんですけど…'); }, react:'恐れ入りますが、お名前をお願いできますか？',
+     why:'名乗らずに用件から話し始めるのは×。まず所属と名前です。'},
+   ],
+   after:async()=>{ await say(U,'山形大学の田中様ですね。いつもお世話になっております。'); } },
+
+ { title:'担当者を呼んでもらう', cam:'room2', npc:U,
+   state:{P:ph(ROOM_P),U:ph(RECEP_U),pip:'U'},
+   q:'人事部の鈴木様に代わってほしい。なんと言う？',
+   opts:[
+    {t:'「インターンシップの件でお電話いたしました。人事部の鈴木様はいらっしゃいますでしょうか。」',ok:true,
+     act:async()=>{ await say(P,'インターンシップの件でお電話いたしました。人事部の鈴木様はいらっしゃいますでしょうか。'); },
+     why:'<b>用件</b>と<b>担当者の部署・名前</b>を告げます。相手側の人には尊敬語「いらっしゃる」（資料より）。'},
+    {t:'「インターンの件で、鈴木さんはおりますか。」',
+     act:async()=>{ await say(P,'インターンの件で、鈴木さんはおりますか。'); },
+     why:'「おる」は謙譲語なので、相手側の人には使えません。「鈴木様はいらっしゃいますか」が正解。'},
+    {t:'「鈴木様に代わっていただけますか？急いでいるので。」',
+     act:async()=>{ await say(P,'鈴木様に代わっていただけますか？急いでいるので。'); }, react:'は、はい…（感じ悪いな…）',
+     why:'用件を言わずに急かすのは失礼。相手の会社の都合を優先しましょう。'},
+   ],
+   after:async()=>{ await say(U,'申し訳ございません。鈴木はただいま席を外しております。'); } },
+
+ { title:'担当者が不在のとき', cam:'room2', npc:U,
+   state:{P:ph(ROOM_P),U:ph(RECEP_U),pip:'U'},
+   q:'「鈴木はただいま席を外しております」と言われた。どうする？',
+   opts:[
+    {t:'「何時頃お戻りになりますでしょうか。改めてお電話いたします。」',ok:true,
+     act:async()=>{ await say(P,'何時頃お戻りになりますでしょうか。改めてお電話いたします。'); },
+     why:'不在なら<b>戻る時間を確認して、こちらからかけ直す</b>（資料より）。'},
+    {t:'「じゃあ、また電話します。」',
+     act:async()=>{ await say(P,'じゃあ、また電話します。'); }, react:'…はい。（いつかけてくるんだろう）',
+     why:'いつかけ直せばいいか分からず、また不在になるかも。戻る時間を聞きましょう。'},
+    {t:'「いつ頃戻られられますか？」',
+     act:async()=>{ await say(P,'いつ頃戻られられますか？'); },
+     why:'「られ」が重なった誤り。「いつ頃お戻りになりますか」「いつ頃お戻りでしょうか」が正解。'},
+   ],
+   after:async()=>{ await say(U,'15時には戻る予定でございます。'); await say(P,'承知いたしました。では、15時過ぎに改めてお電話いたします。失礼いたします。');
+     setPip(null); await phoneDown(P); await caption('── 15時すぎ ──'); await phoneUp(P);
+     pose(S,ph(BOSS_Y)); setPip('S'); await say(S,'お電話代わりました。人事部の鈴木です。'); } },
+
+ { title:'用件の前に', cam:'room2', npc:S,
+   state:{P:ph(ROOM_P),S:ph(BOSS_Y),pip:'S'},
+   q:'鈴木様につながった！用件を話す前に…',
+   opts:[
+    {t:'「山形大学の田中と申します。今、お時間よろしいでしょうか。」',ok:true,
+     act:async()=>{ await say(P,'山形大学の田中と申します。今、お時間よろしいでしょうか。'); },
+     why:'まず名乗り、<b>相手の都合を確認</b>します。そのあと手短に要件を伝えます（資料より）。'},
+    {t:'名乗るのを忘れて、いきなり「11月5日に見学に行きたくて、それで…」',
+     act:async()=>{ await say(P,'11月5日に見学に行きたくて、それで…'); }, react:'え、ええと、どちら様でしょう？',
+     why:'担当者が変わったら、もう一度名乗ります。相手の都合も確認しましょう。'},
+    {t:'「山形大学の田中です。今、ひまですか？」',
+     act:async()=>{ await say(P,'山形大学の田中です。今、ひまですか？'); }, react:'ひ、ひまではないですけど…',
+     why:'「ひまですか」は失礼。「今、お時間よろしいでしょうか」で都合を確認します。'},
+   ],
+   after:async()=>{ await say(S,'はい、大丈夫ですよ。'); } },
+
+ { title:'日程の伝え方', cam:'room2', npc:S,
+   state:{P:ph(ROOM_P),S:ph(BOSS_Y),pip:'S'},
+   q:'見学の日程を相談したい。希望は11月5日（木）14時。',
+   opts:[
+    {t:'「企業見学の件でお電話いたしました。こちらの都合で恐縮ですが、11月5日（木）14時にお邪魔させていただきたいのですが、ご都合いかがでしょうか。」',ok:true,
+     act:async()=>{ await say(P,'企業見学の件でお電話いたしました。こちらの都合で恐縮ですが、11月5日、木曜日の14時にお邪魔させていただきたいのですが、ご都合いかがでしょうか。'); },
+     why:'用件を伝え、「こちらの都合で恐縮ですが」と<b>相手の予定を優先する姿勢</b>で希望を聞きます（資料の例文）。'},
+    {t:'「11月5日の14時に行きますので、よろしくです。」',
+     act:async()=>{ await say(P,'11月5日の14時に行きますので、よろしくです。'); }, react:'（決定事項…？）',
+     why:'自分の都合だけで話を進めないこと（資料より）。相手の都合を伺います。'},
+    {t:'「いつでもいいので、空いている日を教えてもらえますか？」',
+     act:async()=>{ await say(P,'いつでもいいので、空いている日を教えてもらえますか？'); }, react:'ええと…じゃあ確認して、またご連絡しますね。',
+     why:'丸投げすると相手の手間が増えます。具体的な候補日を用意して伝えましょう。'},
+   ],
+   after:async()=>{ await say(S,'すみません、5日はちょっと難しいですね…。'); } },
+
+ { title:'希望日がダメだったら', cam:'room2', npc:S,
+   state:{P:ph(ROOM_P),S:ph(BOSS_Y),pip:'S'},
+   q:'「5日はちょっと難しいですね…」と言われた。',
+   opts:[
+    {t:'「承知いたしました。では、6日（金）か9日（月）はいかがでしょうか。」',ok:true,
+     act:async()=>{ await say(P,'承知いたしました。では、6日の金曜日か、9日の月曜日はいかがでしょうか。'); },
+     why:'希望がダメな場合を想定して、<b>複数の候補日を事前に準備</b>しておきます（資料より）。'},
+    {t:'「えっ、じゃあいつならいいんですか？」',
+     act:async()=>{ await say(P,'えっ、じゃあいつならいいんですか？'); }, react:'……。',
+     why:'責めるような聞き方は×。こちらから別の候補日を出しましょう。'},
+    {t:'「……（何も言えずに沈黙）」',
+     act:async()=>{ await say(P,'……。','あなた（沈黙）'); await wait(600); }, react:'あの、もしもし？',
+     why:'沈黙は相手を不安にさせます。候補日をメモしておけば、すぐ答えられます。'},
+   ],
+   after:async()=>{ await say(S,'では、6日の10時はいかがですか？'); } },
+
+ { title:'切る前の確認', cam:'room2', npc:S,
+   state:{P:ph(ROOM_P),S:ph(BOSS_Y),pip:'S'},
+   q:'「6日の10時はいかがですか？」と提案された。',
+   opts:[
+    {t:'「ありがとうございます。それでは、11月6日（金）10時にお邪魔させていただきます。」',ok:true,
+     act:async()=>{ await say(P,'ありがとうございます。それでは、11月6日、金曜日の10時にお邪魔させていただきます。'); },
+     why:'日時の間違いがないよう、<b>電話を切る前に再度確認</b>します（資料より）。'},
+    {t:'「了解です！」',
+     act:async()=>{ await say(P,'了解です！'); },
+     why:'「了解です」は目上の人には避けたい表現。日時も復唱して確認しましょう。'},
+    {t:'「わかりました。たぶん大丈夫だと思います。」',
+     act:async()=>{ await say(P,'わかりました。たぶん大丈夫だと思います。'); }, react:'た、たぶん…？',
+     why:'「たぶん」では相手が予定を組めません。はっきり日時を復唱して約束します。'},
+   ],
+   after:async()=>{ await say(S,'はい、お待ちしております。'); } },
+
+ { title:'電話の切り方', cam:'room2', npc:S,
+   state:{P:ph(ROOM_P),S:ph(BOSS_Y),pip:'S'},
+   q:'日程が決まった。電話を切るときは？',
+   opts:[
+    {t:'「どうぞよろしくお願い申し上げます。本日はありがとうございました。失礼いたします。」と言い、相手が切るのを待つ',ok:true,
+     act:async()=>{ await say(P,'どうぞよろしくお願い申し上げます。本日はありがとうございました。失礼いたします。'); await say(S,'失礼いたします。'); await phoneDown(S); await wait(500); await phoneDown(P); },
+     why:'お礼を言ってから、<b>相手が電話を切るまで待つ</b>（資料より）。'},
+    {t:'「はい、じゃ、失礼しまーす」と言ってすぐ切る',
+     act:async()=>{ await say(P,'はい、じゃ、失礼しまーす。'); await phoneDown(P); }, react:'（あ、切れた…）',
+     why:'相手より先に切らないよう注意。お礼もきちんと伝えましょう。'},
+    {t:'「失礼いたし…」と言い終わる前に切る',
+     act:async()=>{ await say(P,'失礼いたし…'); await phoneDown(P); }, react:'（ガチャッ…）',
+     why:'言い終わる前に切ると、乱暴な印象に。相手が切ったのを確認してから切ります。'},
+   ],
+   after:async()=>{ setPip(null); await phoneDown(P); emote(P,'✨'); await wait(800); } },
+  ] },
+
+/* ---------------- 第3話 ---------------- */
+{ id:'tel', no:3, title:'電話対応', sub:'入社1年目。取引先からの電話を受ける', sign:['みらい商事','MIRAI Trading','#2b5a4a'],
+  prelude:async()=>{
+    applyState({P:DESK_P}); camSet('officeWide');
+    await caption('入社して1年。今日はあなたが電話番。'); await camTo('desk',1600);
+    await say(P,'（プルルル…プルルル…）','📞 デスクの電話');
+  },
+  steps:[
+ { title:'電話の出方', cam:'desk', npc:null,
+   state:{P:DESK_P},
+   q:'電話が鳴った！どうする？',
+   opts:[
+    {t:'すぐに出て「お電話ありがとうございます。株式会社ストレンジでございます。」',ok:true,
+     act:async()=>{ await phoneUp(P); await say(P,'お電話ありがとうございます。株式会社ストレンジでございます。'); },
+     why:'できるだけ早く（3コール以内が目安）出て、<b>会社名を名乗ります</b>。'},
+    {t:'出て「もしもし？」',
+     act:async()=>{ await phoneUp(P); await say(P,'もしもし？'); },
+     why:'会社の電話で「もしもし」は使いません。会社名を名乗りましょう。'},
+    {t:'忙しいので、しばらく鳴らしておく',
+     act:async()=>{ await say(P,'（プルルル…プルルル…プルルル…）','📞 デスクの電話'); await phoneUp(P); await say(P,'…はい、ストレンジです。'); },
+     why:'待たせるほど相手の印象は悪くなります。3コール以上待たせたら「お待たせいたしました」と添えます。'},
+   ],
+   after:async()=>{ pose(C,ph(CALLER_C)); setPip('C'); await say(C,'みらい商事の佐藤と申します。いつもお世話になっております。'); } },
+
+ { title:'あいさつを返す', cam:'desk', npc:C,
+   state:{P:ph(DESK_P),C:ph(CALLER_C),pip:'C'},
+   q:'「みらい商事の佐藤と申します。いつもお世話になっております。」',
+   opts:[
+    {t:'「こちらこそ、いつもお世話になっております。」',ok:true, act:async()=>{ await say(P,'こちらこそ、いつもお世話になっております。'); },
+     why:'取引先からの電話には<b>「こちらこそ、いつもお世話になっております」</b>と返すのが定番です。'},
+    {t:'「どうも〜。」', act:async()=>{ await say(P,'どうも〜。'); }, react:'（軽いな…）', why:'会社を代表して電話に出ています。くだけた返事は×。'},
+    {t:'「はい。で、ご用件は？」', act:async()=>{ await say(P,'はい。で、ご用件は？'); }, react:'あ、はい…すみません。',
+     why:'いきなり用件を急かすと冷たい印象に。まずあいさつを返します。'},
+   ],
+   after:async()=>{ await say(C,'恐れ入りますが、山田部長はいらっしゃいますか？'); } },
+
+ { title:'上司が不在のとき', cam:'desk', npc:C,
+   state:{P:ph(DESK_P),C:ph(CALLER_C),pip:'C'},
+   q:'「山田部長はいらっしゃいますか？」 部長は会議中。なんと答える？',
+   opts:[
+    {t:'「申し訳ございません。山田はただいま会議中でございます。」',ok:true, act:async()=>{ await say(P,'申し訳ございません。山田はただいま会議中でございます。'); },
+     why:'社外の人に対しては、自分の上司も<b>身内（ウチ）</b>。「部長」を付けずに「山田」と呼び、尊敬語は使いません。'},
+    {t:'「申し訳ございません。山田部長は会議中でいらっしゃいます。」', act:async()=>{ await say(P,'申し訳ございません。山田部長は会議中でいらっしゃいます。'); },
+     why:'身内の上司に「部長」「いらっしゃる」は×。社外の人の前では「山田は〜でございます」。'},
+    {t:'「山田さんは今、会議してます。」', act:async()=>{ await say(P,'山田さんは今、会議してます。'); },
+     why:'社外の人には「山田」と呼び捨てにし、丁寧に「会議中でございます」と伝えます。'},
+   ],
+   after:async()=>{ await say(C,'そうですか。何時頃お戻りになりますか？'); } },
+
+ { title:'戻り時間を伝える', cam:'desk', npc:C,
+   state:{P:ph(DESK_P),C:ph(CALLER_C),pip:'C'},
+   q:'「何時頃お戻りになりますか？」 部長は15時に戻る予定。',
+   opts:[
+    {t:'「15時には戻る予定でございます。戻りましたら、こちらからお電話いたしましょうか。」',ok:true,
+     act:async()=>{ await say(P,'15時には戻る予定でございます。戻りましたら、こちらからお電話いたしましょうか。'); },
+     why:'身内の動作なので「戻る」に尊敬語は付けません。<b>折り返しの提案</b>もできると◎。'},
+    {t:'「15時にはお戻りになる予定です。」',
+     act:async()=>{ await say(P,'15時にはお戻りになる予定です。'); },
+     why:'「お戻りになる」は尊敬語。社外の人の前で、身内の上司を高めてしまっています。'},
+    {t:'「さあ…ちょっとわからないです。」',
+     act:async()=>{ await say(P,'さあ…ちょっとわからないです。'); }, react:'そうですか…。',
+     why:'予定を確認して伝えましょう。わからない場合も「確認して折り返します」と言えます。'},
+   ],
+   after:async()=>{ await say(C,'では、伝言をお願いできますか。明日の打ち合わせを、14時に変更していただきたいんです。'); } },
+
+ { title:'伝言を受ける', cam:'desk', npc:C,
+   state:{P:ph(DESK_P),C:ph(CALLER_C),pip:'C'},
+   q:'伝言を頼まれた。「明日の打ち合わせを14時に変更してほしい」',
+   opts:[
+    {t:'メモを取りながら「明日の打ち合わせを14時に変更、でございますね。かしこまりました。」',ok:true,
+     act:async()=>{ await all(armTo(P,'L','look'),tw(P.u.head.rotation,'x',0.35,300)); await say(P,'明日の打ち合わせを14時に変更、でございますね。かしこまりました。'); await all(armTo(P,'L','down'),tw(P.u.head.rotation,'x',0,300)); },
+     why:'伝言は<b>メモを取り、復唱して確認</b>します。返事は「かしこまりました」。'},
+    {t:'メモを取らずに「了解です」',
+     act:async()=>{ await say(P,'了解です。'); }, react:'（大丈夫かな…）',
+     why:'メモを取らないと伝え間違いのもと。「了解です」も社外の人には避けます。'},
+    {t:'「かしこまりました。山田部長にお伝えになります。」',
+     act:async()=>{ await say(P,'かしこまりました。山田部長にお伝えになります。'); },
+     why:'「お伝えになる」は尊敬語なので自分の動作には×。身内の上司に「部長」も付けません。'},
+   ] },
+
+ { title:'連絡先を確認する', cam:'desk', npc:C,
+   state:{P:ph(DESK_P),C:ph(CALLER_C),pip:'C'},
+   q:'伝言をメモした。念のため確認しておくことは？',
+   opts:[
+    {t:'「念のため、お電話番号を伺ってもよろしいでしょうか。」',ok:true,
+     act:async()=>{ await say(P,'念のため、お電話番号を伺ってもよろしいでしょうか。'); },
+     why:'折り返しのために<b>連絡先を確認</b>します。「聞く」は謙譲語の「伺う」。'},
+    {t:'「電話番号、教えてもらえます？」',
+     act:async()=>{ await say(P,'電話番号、教えてもらえます？'); },
+     why:'くだけすぎ。「お電話番号を伺ってもよろしいでしょうか」と言いましょう。'},
+    {t:'何も確認せずに「では、失礼します」',
+     act:async()=>{ await say(P,'では、失礼します。'); }, react:'あ、あの、番号は…？',
+     why:'連絡先・相手の名前の確認は電話対応の基本です。'},
+   ],
+   after:async()=>{ await say(C,'03-1234-5678です。'); } },
+
+ { title:'受けた人を名乗る', cam:'desk', npc:C,
+   state:{P:ph(DESK_P),C:ph(CALLER_C),pip:'C'},
+   q:'最後に、誰が伝言を受けたかを伝える。',
+   opts:[
+    {t:'「わたくし、田中が承りました。山田に申し伝えます。」',ok:true,
+     act:async()=>{ await say(P,'わたくし、田中が承りました。山田に申し伝えます。'); },
+     why:'<b>誰が受けたか名乗る</b>と相手が安心します。「承る」「申し伝える」は謙譲語。'},
+    {t:'「田中が受け付けてあげました。」',
+     act:async()=>{ await say(P,'田中が受け付けてあげました。'); }, react:'あ、あげました…？',
+     why:'「〜してあげる」は恩着せがましく聞こえます。「承りました」が正解。'},
+    {t:'「山田部長にお伝えしておきます。」',
+     act:async()=>{ await say(P,'山田部長にお伝えしておきます。'); },
+     why:'「お伝えする」は山田を高める表現。社外の人の前では「山田に申し伝えます」。自分の名前も名乗りましょう。'},
+   ],
+   after:async()=>{ await say(C,'田中さんですね。よろしくお願いいたします。'); } },
+
+ { title:'電話の切り方', cam:'desk', npc:C,
+   state:{P:ph(DESK_P),C:ph(CALLER_C),pip:'C'},
+   q:'用件が終わった。電話を切るときは？',
+   opts:[
+    {t:'「お電話ありがとうございました。失礼いたします。」と言い、相手が切ってから受話器を置く',ok:true,
+     act:async()=>{ await say(P,'お電話ありがとうございました。失礼いたします。'); await say(C,'失礼いたします。'); await phoneDown(C); await wait(400); await phoneDown(P); },
+     why:'お礼を言い、<b>相手が切ってから</b>静かに受話器を置きます。'},
+    {t:'「はい、どうもー」とすぐに受話器を置く',
+     act:async()=>{ await say(P,'はい、どうもー。'); await phoneDown(P); }, react:'（ガチャ…）',
+     why:'相手より先に切るのは×。お礼のひと言も添えましょう。'},
+    {t:'「じゃ、そういうことで。」',
+     act:async()=>{ await say(P,'じゃ、そういうことで。'); await phoneDown(P); }, react:'（そういうこと…？）',
+     why:'取引先には「お電話ありがとうございました。失礼いたします」。'},
+   ],
+   after:async()=>{ setPip(null); await phoneDown(P); emote(P,'📝'); await wait(800); } },
+  ] },
+
+/* ---------------- 第4話 ---------------- */
+{ id:'bossvisit', no:4, title:'上司と取引先訪問', sub:'尊敬語と謙譲語、ウチとソトの使い分け', sign:['みらい商事','MIRAI Trading','#2b5a4a'],
+  base:{U:RECEP_U},
+  prelude:async()=>{
+    applyState({U:RECEP_U,P:{x:-8.4,z:2.5,ry:R90},Y:{x:-9.3,z:2.9,ry:R90},bag:'P'}); camSet('wide');
+    await caption('今日は山田部長と、取引先「みらい商事」を訪問。'); camTo('recep',2400);
+    await all(walk(P,-3.5,0.95),(async()=>{ await wait(300); await walk(Y,-2.5,1.45); })()); await all(turnTo(P,R180),turnTo(Y,R180));
+    await say(U,'いらっしゃいませ。');
+  },
+  steps:[
+ { title:'受付で取り次ぎを頼む', cam:'recep', npc:U,
+   state:{P:{x:-3.5,z:0.95,ry:R180},Y:{x:-2.5,z:1.45,ry:R180},bag:'P'},
+   q:'上司と一緒に受付へ。14時に営業部の佐藤様と約束。なんと言う？',
+   opts:[
+    {t:'「お世話になっております。株式会社ストレンジの田中と申します。本日14時に、営業部の佐藤様とお約束をいただいております。」',ok:true,
+     act:async()=>{ await say(P,'お世話になっております。株式会社ストレンジの田中と申します。本日14時に、営業部の佐藤様とお約束をいただいております。'); await bow(P,15); },
+     why:'会社名・名前・約束の相手と時間を伝えます。相手の会社の人は「佐藤様」。'},
+    {t:'「ストレンジの山田部長と田中です。佐藤様はいらっしゃいますか。」',
+     act:async()=>{ await say(P,'ストレンジの山田部長と田中です。佐藤様はいらっしゃいますか。'); }, react:'…山田部長様、ですね？',
+     why:'社外の人の前で、自分の上司に「部長」を付けるのは×。言うなら「部長の山田」。'},
+    {t:'「佐藤さんに会いに参られました。」',
+     act:async()=>{ await say(P,'佐藤さんに会いに参られました。'); },
+     why:'「参る」は謙譲語、「参られる」は謙譲＋尊敬の誤用。相手の会社の人は「佐藤様」。'},
+   ],
+   after:async()=>{ await say(U,'ストレンジの田中様ですね。お待ちしておりました。応接室へご案内いたします。'); camTo('room',1800);
+     await all(walk(P,2.5,2.3),(async()=>{ await wait(400); await walk(Y,3.75,2.3); })()); await all(turnTo(P,R180),turnTo(Y,R180));
+     await say(U,'こちらでお待ちください。'); } },
+
+ { title:'席の座り方', cam:'room', npc:Y,
+   state:{P:{x:2.5,z:2.3,ry:R180},Y:{x:3.75,z:2.3,ry:R180},bag:'P'},
+   q:'応接室に通された。入口は左のドア。上司とどう座る？',
+   opts:[
+    {t:'上司に入口から遠い席（右）を勧め、自分は入口に近い席に座る',ok:true,
+     act:async()=>{ await say(P,'部長、どうぞ奥のお席へ。'); await all(moveZ(Y,1.5),sit(Y)); await all(moveZ(P,1.5),sit(P)); await moveProp(bag,2.0,0.15,1.55); },
+     why:'<b>入口から遠い席が上座</b>。目上の人に上座を勧め、自分は入口側（下座）に座ります。'},
+    {t:'自分が先に、入口から遠い席に座る',
+     act:async()=>{ await walk(P,3.75,1.85); await turnTo(P,R180); await moveZ(P,1.5,300); await sit(P); }, react:'（田中、そこは…）',
+     why:'上座は目上の人の席。部下が先に座るのも×です。'},
+    {t:'上司より先に、手前の席にドカッと座る',
+     act:async()=>{ await all(moveZ(P,1.5,300),sit(P,300)); await tw(P.u.torso.rotation,'x',-0.25,400); await wait(500); },
+     why:'上司より先に座らないこと。背もたれによりかかるのも×。'},
+   ],
+   after:async()=>{ camTo('side4',1600); pose(C,{x:6.2,z:-3.9}); await walk(C,3.75,-1.15); await turnTo(C,0);
+     await all(stand(Y),moveZ(Y,1.15,500),stand(P),moveZ(P,1.15,500));
+     await say(C,'お待たせいたしました。営業部の佐藤でございます。'); await say(C,'田中さん、いつもありがとうございます。そちらの方は？'); } },
+
+ { title:'上司を紹介する', cam:'side4', npc:C,
+   state:{P:STAND_P,Y:STAND_Y,C:STAND_C,bag:'floor'},
+   q:'佐藤様に、自分の上司（山田部長）を紹介する。',
+   opts:[
+    {t:'「ご紹介いたします。こちらは弊社営業部長の山田でございます。」',ok:true,
+     act:async()=>{ await say(P,'ご紹介いたします。こちらは弊社営業部長の山田でございます。'); },
+     why:'社外の人に身内を紹介するときは、上司でも<b>「部長の山田」</b>と呼び捨てにし、<b>「〜でございます」</b>とへりくだります。'},
+    {t:'「こちらは、うちの山田部長でいらっしゃいます。」',
+     act:async()=>{ await say(P,'こちらは、うちの山田部長でいらっしゃいます。'); }, react:'（いらっしゃいます…？）',
+     why:'「いらっしゃる」は尊敬語。社外の人の前で身内を高めてしまっています。「うち」もくだけた言い方。'},
+    {t:'「こちらは山田部長さんです。」',
+     act:async()=>{ await say(P,'こちらは山田部長さんです。'); },
+     why:'「部長」はそれ自体が敬称なので「部長さん」は×。社外では「部長の山田」と紹介します。'},
+   ],
+   after:async()=>{ await say(Y,'山田でございます。いつも田中がお世話になっております。'); } },
+
+ { title:'名刺交換の順番', cam:'side4', npc:C,
+   state:{P:STAND_P,Y:STAND_Y,C:STAND_C,bag:'floor'},
+   q:'名刺交換をする。どの順番？',
+   opts:[
+    {t:'まず上司と佐藤様が交換し、そのあと自分が交換する',ok:true,
+     act:async()=>{ await all(armsFwd(Y),armsFwd(C)); await wait(600); await all(bow(Y,15,150),bow(C,15,150)); await all(armsDown(Y),armsDown(C));
+       await armsFwd(P); await say(P,'改めまして、田中でございます。よろしくお願いいたします。'); await bow(P,15,150); await armsDown(P); },
+     why:'名刺交換は<b>役職が上の人から</b>。部下は上司の交換が終わってから行います。'},
+    {t:'自分が真っ先に名刺を差し出す',
+     act:async()=>{ await armsFwd(P); await say(P,'田中です！よろしくお願いします！'); await armsDown(P); }, react:'あ、はい…（部長さんは…？）',
+     why:'上司を差し置いて先に交換するのは×。上の立場の人から順番に。'},
+    {t:'上司の名刺交換中に、横から同時に差し出す',
+     act:async()=>{ await all(armsFwd(Y),armsFwd(C),armsFwd(P)); await wait(900); await all(armsDown(Y),armsDown(C),armsDown(P)); }, react:'（ど、どっちから受け取れば…）',
+     why:'同時に出すと相手が困ります。上司の交換が終わるのを待ちましょう。'},
+   ],
+   after:async()=>{ await say(C,'どうぞ、お掛けください。'); await all(moveZ(Y,1.5),sit(Y),moveZ(P,1.5),sit(P),moveZ(C,-1.5),sit(C)); camTo('overC');
+     await say(C,'山田様は、以前も弊社にいらっしゃいましたよね？'); } },
+
+ { title:'身内の動作を話す', cam:'overC', npc:C,
+   state:{P:SEAT_P,Y:SEAT_Y,C:SEAT_C,bag:'floor'},
+   q:'「山田様は、以前も弊社にいらっしゃいましたよね？」 あなたが代わりに答える。',
+   opts:[
+    {t:'「はい。山田は昨年も一度、伺っております。」',ok:true, act:async()=>{ await say(P,'はい。山田は昨年も一度、伺っております。'); },
+     why:'佐藤様は山田部長に尊敬語を使いますが、<b>あなたにとって山田は身内</b>。ソトの人には謙譲語「伺う」で話します。'},
+    {t:'「はい。山田部長は昨年もいらっしゃいました。」', act:async()=>{ await say(P,'はい。山田部長は昨年もいらっしゃいました。'); }, react:'（部長、苦笑い…）',
+     why:'相手が尊敬語を使っても、つられないこと。身内の上司を社外の人の前で高めるのは×。'},
+    {t:'「はい。山田は昨年も参られました。」', act:async()=>{ await say(P,'はい。山田は昨年も参られました。'); },
+     why:'「参る」（謙譲）＋「られる」（尊敬）が混ざった誤用です。'},
+   ],
+   after:async()=>{ await say(C,'そうでしたね。今日は新商品のお話でしたね。'); } },
+
+ { title:'資料を渡す', cam:'overC', npc:C,
+   state:{P:SEAT_P,Y:SEAT_Y,C:SEAT_C,bag:'floor',doc:'table'},
+   q:'新商品の資料を渡して、見てもらいたい。',
+   opts:[
+    {t:'「こちらが新商品の資料でございます。どうぞご覧ください。」',ok:true,
+     act:async()=>{ await say(P,'こちらが新商品の資料でございます。どうぞご覧ください。'); await moveProp(doc,3.6,0.775,-0.25,600); },
+     why:'見るのは佐藤様なので、尊敬語<b>「ご覧ください」</b>。'},
+    {t:'「こちらが新商品の資料です。どうぞ拝見してください。」',
+     act:async()=>{ await say(P,'こちらが新商品の資料です。どうぞ拝見してください。'); await moveProp(doc,3.6,0.775,-0.25,600); }, react:'は、拝見…いたしますね。',
+     why:'「拝見する」は自分が見るときの謙譲語。相手に使うと失礼になります。'},
+    {t:'「こちらが新商品の資料です。どうぞご覧になられてください。」',
+     act:async()=>{ await say(P,'こちらが新商品の資料です。どうぞご覧になられてください。'); await moveProp(doc,3.6,0.775,-0.25,600); },
+     why:'「ご覧になる」＋「られる」の二重敬語です。'},
+   ],
+   after:async()=>{ await nod(C); await say(C,'ありがとうございます。とても良いですね。来週、私も御社に伺ってもよろしいですか？'); } },
+
+ { title:'相手の動作を迎える', cam:'overC', npc:C,
+   state:{P:SEAT_P,Y:SEAT_Y,C:SEAT_C,bag:'floor',doc:'given'},
+   q:'「来週、私も御社に伺ってもよろしいですか？」 歓迎したい。',
+   opts:[
+    {t:'「はい、ぜひお越しください。お待ちしております。」',ok:true, act:async()=>{ await say(P,'はい、ぜひお越しください。お待ちしております。'); },
+     why:'来るのは佐藤様なので、尊敬語<b>「お越しになる」</b>。佐藤様が自分に「伺う」を使うのは、佐藤様側の謙譲語だから正しいのです。'},
+    {t:'「はい、ぜひ伺ってください。」', act:async()=>{ await say(P,'はい、ぜひ伺ってください。'); }, react:'（伺って…？）',
+     why:'相手が「伺う」と言っても、そのまま返すと謙譲語を相手に使うことに。「お越しください」「いらしてください」が正解。'},
+    {t:'「はい、ぜひ参ってください。」', act:async()=>{ await say(P,'はい、ぜひ参ってください。'); },
+     why:'「参る」も謙譲語。相手の「来る」には尊敬語を使います。'},
+   ],
+   after:async()=>{ await say(C,'では、本日はありがとうございました。'); } },
+
+ { title:'訪問の終わり', cam:'side4', npc:C,
+   state:{P:SEAT_P,Y:SEAT_Y,C:SEAT_C,bag:'floor',doc:'given'},
+   q:'「本日はありがとうございました」と言われた。',
+   opts:[
+    {t:'上司と一緒に立ち上がり「こちらこそ、お時間をいただきありがとうございました。」と言ってお辞儀',ok:true,
+     act:async()=>{ await all(stand(Y),moveZ(Y,1.15,500),stand(P),moveZ(P,1.15,500)); await say(P,'こちらこそ、お時間をいただきありがとうございました。'); await all(bow(P,30),bow(Y,30)); },
+     why:'上司と一緒に立ち、<b>時間を取ってもらったお礼</b>を伝えます。'},
+    {t:'座ったまま「どういたしまして」',
+     act:async()=>{ await say(P,'どういたしまして。'); }, react:'（えっ…）',
+     why:'お礼に「どういたしまして」は×。訪問したのはこちら。「こちらこそ」とお礼を返します。'},
+    {t:'「ご苦労さまでした」と言って、先に部屋を出る',
+     act:async()=>{ await all(stand(P),moveZ(P,1.15,400)); await say(P,'ご苦労さまでした。'); await walk(P,0.5,2.6); },
+     why:'「ご苦労さま」は目上から目下への言葉。上司より先に退出するのも×。'},
+   ],
+   after:async()=>{ await all(stand(C),moveZ(C,-1.15,400)); await bow(C,30); attachTo(bag,P.u.elL,0,-0.5,0); doc.visible=false; camTo('outside',2600);
+     await all(walk(Y,-9.6,2.3),(async()=>{ await wait(500); await walk(P,-10.6,2.7); })()); await all(face(Y,P),face(P,Y));
+     await say(Y,'田中、お疲れさま。佐藤様、新商品はどうだったと思う？'); } },
+
+ { title:'帰り道、上司と話す', cam:'outside', npc:Y,
+   state:{P:{x:-10.6,z:2.7,ry:Math.atan2(1,-0.4)},Y:{x:-9.6,z:2.3,ry:Math.atan2(-1,0.4)},bag:'P',U:null},
+   q:'帰り道。上司に佐藤様の様子を伝える。',
+   opts:[
+    {t:'「佐藤様は、新商品をとても気に入っていらっしゃるようでした。」',ok:true, act:async()=>{ await say(P,'佐藤様は、新商品をとても気に入っていらっしゃるようでした。'); },
+     why:'今度は身内（上司）との会話。でも佐藤様は<b>ソトの人</b>なので、ここでも「様」＋尊敬語です。'},
+    {t:'「佐藤は、新商品をとても気に入っておりました。」', act:async()=>{ await say(P,'佐藤は、新商品をとても気に入っておりました。'); }, react:'おいおい、佐藤様を呼び捨てにするな。',
+     why:'呼び捨て・謙譲語は身内に使うもの。取引先の人は、だれと話していても「様」で尊敬語。'},
+    {t:'「佐藤さん、新商品めっちゃ気に入ってたっぽいです。」', act:async()=>{ await say(P,'佐藤さん、新商品めっちゃ気に入ってたっぽいです。'); }, react:'言い方…。',
+     why:'上司への報告もビジネスの会話。丁寧語以上で話しましょう。'},
+   ],
+   after:async()=>{ await nod(Y); await say(Y,'そうか、よかった。今日の言葉づかい、ばっちりだったぞ。'); emote(P,'✨'); await wait(600); } },
+  ] },
+
+/* ---------------- 第5話 ---------------- */
+{ id:'report', no:5, title:'上司への報告', sub:'伝言・結論から・ミスの報告', sign:['みらい商事','MIRAI Trading','#2b5a4a'],
+  prelude:async()=>{
+    applyState({P:DESK_P,Y:{x:9.0,z:3.2,ry:R90}}); camSet('officeWide');
+    await caption('15時。山田部長が会議から戻ってきた。');
+    await walk(Y,13,-3.3); await turnTo(Y,0); await all(moveZ(Y,-2.6,300),sit(Y)); await camTo('desk',1200);
+  },
+  steps:[
+ { title:'報告の切り出し方', cam:'desk', npc:Y,
+   state:{P:DESK_P,Y:BOSS_Y},
+   q:'部長に、さっきの電話の伝言を報告したい。',
+   opts:[
+    {t:'部長の席へ行き「部長、今お時間よろしいでしょうか。ご報告がございます。」',ok:true,
+     act:async()=>{ await stand(P); await walk(P,13,-1.15); await turnTo(P,R180); camTo('boss',800); await say(P,'部長、今お時間よろしいでしょうか。ご報告がございます。'); await bow(P,15,150); },
+     why:'上司の席まで行き、<b>相手の都合を確認</b>してから報告します。'},
+    {t:'自分の席から大声で「部長〜、ちょっといいっすか〜」',
+     act:async()=>{ await say(P,'部長〜、ちょっといいっすか〜'); }, react:'…なんだ、田中。',
+     why:'席から大声で呼ぶのは×。上司のところへ行って話しかけます。'},
+    {t:'部長が座るなり、後ろから「聞いてください！」',
+     act:async()=>{ await stand(P); await walk(P,13.4,-3.6); await face(P,Y); await say(P,'部長、聞いてください！'); }, react:'うわっ、びっくりした。',
+     why:'いきなり話しかけず、「今お時間よろしいでしょうか」と都合を確認しましょう。'},
+   ],
+   after:async()=>{ await say(Y,'ああ、いいよ。'); } },
+
+ { title:'だれからの電話か', cam:'boss', npc:Y,
+   state:{P:BEFORE_Y,Y:BOSS_Y},
+   q:'取引先の佐藤様から電話があったことを伝える。',
+   opts:[
+    {t:'「みらい商事の佐藤様から、お電話がありました。」',ok:true, act:async()=>{ await say(P,'みらい商事の佐藤様から、お電話がありました。'); },
+     why:'上司と話していても、取引先の人は<b>「佐藤様」</b>。'},
+    {t:'「みらい商事の佐藤から、お電話がございました。」', act:async()=>{ await say(P,'みらい商事の佐藤から、お電話がございました。'); }, react:'佐藤「様」、な。',
+     why:'取引先の人を呼び捨てにするのは×。呼び捨ては社外の人に身内のことを話すときだけ。'},
+    {t:'「佐藤さんから電話が来ました。」', act:async()=>{ await say(P,'佐藤さんから電話が来ました。'); }, react:'どこの佐藤さんだ？',
+     why:'会社名も言わないと、どの佐藤様か分かりません。「みらい商事の佐藤様から、お電話がありました」。'},
+   ],
+   after:async()=>{ await say(Y,'うん。用件は？'); } },
+
+ { title:'相手の言葉を伝える', cam:'boss', npc:Y,
+   state:{P:BEFORE_Y,Y:BOSS_Y},
+   q:'用件は「明日の打ち合わせを14時に変更したい」。佐藤様の言葉として伝える。',
+   opts:[
+    {t:'「明日の打ち合わせを、14時に変更したいとおっしゃっていました。」',ok:true, act:async()=>{ await say(P,'明日の打ち合わせを、14時に変更したいとおっしゃっていました。'); },
+     why:'言ったのは佐藤様なので、尊敬語<b>「おっしゃる」</b>。'},
+    {t:'「明日の打ち合わせを、14時に変更したいと申しておりました。」', act:async()=>{ await say(P,'明日の打ち合わせを、14時に変更したいと申しておりました。'); },
+     why:'「申す」は謙譲語。第3話で社外の人に「山田に申し伝えます」と言ったのとは逆で、佐藤様の動作には尊敬語を使います。'},
+    {t:'「明日の打ち合わせを、14時に変更したいと申されていました。」', act:async()=>{ await say(P,'明日の打ち合わせを、14時に変更したいと申されていました。'); },
+     why:'「申す」（謙譲）＋「れる」（尊敬）の誤用です。'},
+   ],
+   after:async()=>{ await say(Y,'わかった、ありがとう。ところで、昨日の見積もりの件はどうなった？'); } },
+
+ { title:'報告は結論から', cam:'boss', npc:Y,
+   state:{P:BEFORE_Y,Y:BOSS_Y},
+   q:'見積もりは承認された。どう報告する？',
+   opts:[
+    {t:'「結論から申し上げますと、A案で承認いただきました。理由は2点ございまして…」',ok:true,
+     act:async()=>{ await say(P,'結論から申し上げますと、A案で承認いただきました。理由は2点ございまして…'); },
+     why:'報告は<b>結論から</b>。そのあとに理由や経緯を話します。'},
+    {t:'「ええと、まず月曜に電話して、それから火曜に資料を送って、それで…」',
+     act:async()=>{ await say(P,'ええと、まず月曜に電話して、それから火曜に資料を送って、それで…'); }, react:'…で、結論は？',
+     why:'経緯から話すと、何が言いたいのか伝わりにくくなります。'},
+    {t:'「まあ、いい感じでした！」',
+     act:async()=>{ await say(P,'まあ、いい感じでした！'); }, react:'いい感じ、とは…？',
+     why:'あいまいな報告では上司が判断できません。結果を具体的に。'},
+   ],
+   after:async()=>{ await say(Y,'よし。じゃあ、この資料を社長にも見せておいてくれ。'); } },
+
+ { title:'さらに目上の人への動作', cam:'boss', npc:Y,
+   state:{P:BEFORE_Y,Y:BOSS_Y},
+   q:'「この資料を社長にも見せておいてくれ」と頼まれた。',
+   opts:[
+    {t:'「かしこまりました。社長にお見せしておきます。」',ok:true, act:async()=>{ await say(P,'かしこまりました。社長にお見せしておきます。'); },
+     why:'見せるのは自分（社長に向けた動作）なので、謙譲語<b>「お見せする」</b>。'},
+    {t:'「かしこまりました。社長にご覧になっておきます。」', act:async()=>{ await say(P,'かしこまりました。社長にご覧になっておきます。'); }, react:'君がご覧になるのか？',
+     why:'「ご覧になる」は社長が見るときの尊敬語。自分の動作は「お見せする」。'},
+    {t:'「了解です。社長に見せてあげておきます。」', act:async()=>{ await say(P,'了解です。社長に見せてあげておきます。'); }, react:'あげて…おく…？',
+     why:'「〜してあげる」は目上の人には使いません。「了解です」も避けたい表現。'},
+   ],
+   after:async()=>{ await say(Y,'あと、明日は何時に来る？'); } },
+
+ { title:'自分の動作を話す', cam:'boss', npc:Y,
+   state:{P:BEFORE_Y,Y:BOSS_Y},
+   q:'「明日は何時に来る？」 8時半に出社する予定。',
+   opts:[
+    {t:'「明日は8時半に参ります。」',ok:true, act:async()=>{ await say(P,'明日は8時半に参ります。'); },
+     why:'来るのは自分なので、謙譲語<b>「参る」</b>。'},
+    {t:'「明日は8時半にいらっしゃいます。」', act:async()=>{ await say(P,'明日は8時半にいらっしゃいます。'); }, react:'自分に敬語を使ってどうする。',
+     why:'「いらっしゃる」は尊敬語。自分の動作には使いません。'},
+    {t:'「明日は8時半に来られます。」', act:async()=>{ await say(P,'明日は8時半に来られます。'); },
+     why:'「来られる」も尊敬語（または可能の意味）。自分には「参ります」。'},
+   ],
+   after:async()=>{ await say(Y,'わかった。'); await walk(P,12,1.7); await turnTo(P,R180); await all(moveZ(P,1.25,300),sit(P)); camTo('desk',900);
+     await caption('…席に戻ると、見積書の金額にミスを発見！'); emote(P,'💦'); await wait(700); } },
+
+ { title:'ミスの報告', cam:'desk', npc:Y,
+   state:{P:DESK_P,Y:BOSS_Y},
+   q:'自分が作った見積書の金額が間違っていた。どうする？',
+   opts:[
+    {t:'すぐに部長のところへ行き「申し訳ございません。見積書の金額に誤りがありました。」と深くお辞儀',ok:true,
+     act:async()=>{ await stand(P); await walk(P,13,-1.15); await turnTo(P,R180); camTo('boss',800); await say(P,'部長、申し訳ございません。見積書の金額に誤りがありました。'); await bow(P,45,700); },
+     why:'ミスこそ<b>すぐに報告</b>。お詫びは<b>最敬礼（約45°）</b>（資料より）。そのあと事実と対応策を伝えます。'},
+    {t:'怒られたくないので、黙って自分で直しておく',
+     act:async()=>{ await all(armTo(P,'R','look'),armTo(P,'L','look'),tw(P.u.head.rotation,'x',0.3,300)); await wait(1200); }, react:'（…なんだか田中の様子が変だな）',
+     why:'隠すと、相手先に間違った金額が伝わったままになるかも。すぐに上司に報告しましょう。'},
+    {t:'自分の席から「部長、なんか金額バグってたっぽいです」',
+     act:async()=>{ await say(P,'部長、なんか金額バグってたっぽいです。'); }, react:'…ちょっとこっちに来なさい。',
+     why:'他人事のような言い方は×。上司の席に行き、まずお詫びをします。'},
+   ],
+   after:async()=>{ await say(Y,'正直に言ってくれて助かった。すぐに修正版を送ろう。'); await walk(P,12,1.7); await turnTo(P,R180); await all(moveZ(P,1.25,300),sit(P));
+     camTo('farewell',900); await caption('── 18時 ──'); await stand(Y); await walk(Y,10.9,1.3); await turnTo(Y,R90); await say(Y,'じゃあ、お先に。'); } },
+
+ { title:'上司が帰るとき', cam:'farewell', npc:Y,
+   state:{P:DESK_P,Y:{x:10.9,z:1.3,ry:R90}},
+   q:'部長が「じゃあ、お先に」と帰っていく。',
+   opts:[
+    {t:'立ち上がって、部長の方を向いて「お疲れさまでした。」',ok:true,
+     act:async()=>{ await stand(P); await turnTo(P,-R90); await say(P,'お疲れさまでした。'); await bow(P,15); },
+     why:'目上の人には<b>「お疲れさまでした」</b>。'},
+    {t:'座ったまま「ご苦労さまでした。」',
+     act:async()=>{ await say(P,'ご苦労さまでした。'); }, react:'…ご苦労さま、ねえ。',
+     why:'「ご苦労さま」は目上の人から目下の人への言葉です。'},
+    {t:'パソコンを見たまま「さようなら〜」',
+     act:async()=>{ await say(P,'さようなら〜'); },
+     why:'相手の方を向いて挨拶します。職場では「お疲れさまでした」。'},
+   ],
+   after:async()=>{ await say(Y,'お疲れさま。今日はよく頑張ったな。'); await walk(Y,9.0,3.2); Y.visible=false; emote(P,'✨'); await wait(800); } },
+  ] },
 ];
 
 /* =========================================================
@@ -507,14 +1194,16 @@ const STEPS=[
    ========================================================= */
 const panel=document.getElementById('panel'), panelIn=document.getElementById('panelIn'), screenEl=document.getElementById('screen');
 const banner=document.getElementById('banner');
-let score=50, log=[];
+let score=50, log=[], CH=null;
+let BEST={}; try{ BEST=JSON.parse(localStorage.getItem('skw-sim-best')||'{}'); }catch(e){}
+const saveBest=()=>{ try{ localStorage.setItem('skw-sim-best',JSON.stringify(BEST)); }catch(e){} };
 function setScore(v){ score=Math.max(0,Math.min(100,v)); meterBar.style.width=score+'%'; meterNum.textContent=score; }
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
 function hidePanel(){ panel.classList.remove('show'); }
-function ask(step,i){
+function ask(step,i,n){
   return new Promise(res=>{
     const opts=shuffle(step.opts);
-    panelIn.innerHTML=`<div class="q"><small>Q${i+1} / ${STEPS.length}・${step.title}</small>${step.q}</div>
+    panelIn.innerHTML=`<div class="q"><small>Q${i+1} / ${n}・${step.title}</small>${step.q}</div>
       <div class="opts">${opts.map((o,j)=>`<button class="opt" data-j="${j}"><span class="k">${'ABC'[j]}</span><span>${o.t}</span></button>`).join('')}</div>`;
     panel.classList.add('show');
     panelIn.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ hidePanel(); res(opts[+b.dataset.j]); });
@@ -531,58 +1220,59 @@ function result(step,choice){
     nextBtn.onclick=()=>{ hidePanel(); res(); };
   });
 }
-function flash(text){ banner.textContent=text; banner.style.opacity=1; }
-async function play(){
-  setScore(50); log=[]; screenEl.hidden=true;
-  // オープニング：入口から受付へ
-  applyState({...STEPS[0].state,P:{x:-8.4,z:2.5,ry:Math.PI/2}});
-  camera.position.set(...CAMS.wide[0]); camLook.set(...CAMS.wide[1]);
-  stepPill.textContent='第1話 企業訪問';
-  await wait(400); camTo('recep',2600); await walk(P,-3.5,0.95); await turnTo(P,Math.PI);
-  await say(U,'いらっしゃいませ。');
-  for(let i=0;i<STEPS.length;i++){
-    const st=STEPS[i]; stepPill.textContent=`Q${i+1}/${STEPS.length} ${st.title}`;
-    applyState(st.state); await camTo(st.cam,700);
-    const c=await ask(st,i);
+const stateOf=(ch,st)=>({...(ch.base||{}),...st.state});
+async function play(ch){
+  CH=ch; setScore(50); log=[]; screenEl.hidden=true; setSign(...ch.sign);
+  stepPill.textContent=`第${ch.no}話 ${ch.title}`;
+  await ch.prelude();
+  const n=ch.steps.length;
+  for(let i=0;i<n;i++){
+    const st=ch.steps[i]; stepPill.textContent=`第${ch.no}話 Q${i+1}/${n}`;
+    applyState(stateOf(ch,st)); await camTo(st.cam,700);
+    const c=await ask(st,i,n);
     await c.act();
-    if(c.ok){ emote(st.npc||P,'😊'); setScore(score+5); }
-    else { emote(st.npc||P,st.npc?'😓':'💦'); setScore(score-10); if(c.react&&st.npc) await say(st.npc,c.react); }
+    const who=st.npc&&st.npc.visible?st.npc:P;
+    if(c.ok){ emote(who,'😊'); setScore(score+5); }
+    else { emote(who,st.npc?'😓':'💦'); setScore(score-10); if(c.react&&st.npc) await say(st.npc,c.react); }
     log.push({title:st.title,ok:c.ok});
     await wait(500);
     await result(st,c);
-    if(!c.ok){ applyState(st.state); await camTo(st.cam,300); flash('お手本'); await st.opts.find(o=>o.ok).act(); banner.style.opacity=0; await wait(300); }
+    if(!c.ok){ applyState(stateOf(ch,st)); await camTo(st.cam,300); banner.textContent='お手本'; banner.style.opacity=1; await st.opts.find(o=>o.ok).act(); banner.style.opacity=0; await wait(300); }
     if(st.after) await st.after();
   }
   finish();
 }
+const RANKS='SABC';
 function finish(){
+  setPip(null);
   const n=log.filter(l=>l.ok).length;
-  const [r,msg]=score>=90?['S','内定まちがいなし！']:score>=70?['A','好印象で面談終了！']:score>=50?['B','まずまず。次はもっと良くなる！']:['C','練習あるのみ！もう一度挑戦しよう'];
+  const [r,msg]=score>=90?['S','パーフェクトな立ち回り！']:score>=70?['A','好印象！']:score>=50?['B','まずまず。次はもっと良くなる！']:['C','練習あるのみ！もう一度挑戦しよう'];
+  if(!BEST[CH.id]||RANKS.indexOf(r)<RANKS.indexOf(BEST[CH.id])){ BEST[CH.id]=r; saveBest(); }
+  const next=CHAPTERS[CHAPTERS.indexOf(CH)+1];
   screenEl.hidden=false;
   screenEl.innerHTML=`<div class="card" style="text-align:center">
-    <div class="eyebrow">第1話 企業訪問 クリア</div>
+    <div class="eyebrow">第${CH.no}話 ${CH.title} クリア</div>
     <div class="rank">${r}</div><h1>${msg}</h1>
-    <p>印象 ${score} / 100 ・ 正解 ${n} / ${STEPS.length}</p>
+    <p>印象 ${score} / 100 ・ 正解 ${n} / ${CH.steps.length}</p>
     <ul class="log" style="text-align:left">${log.map(l=>`<li>${l.ok?'⭕':'❌'} ${l.title}</li>`).join('')}</ul>
-    <div class="stack"><button class="btn" id="again">もう一度プレイ</button><button class="btn ghost" id="toTitle">タイトルへ</button></div></div>`;
-  again.onclick=()=>play(); toTitle.onclick=title;
+    <div class="stack">${next?`<button class="btn" id="nextCh">第${next.no}話「${next.title}」へ</button>`:''}
+      <button class="btn ${next?'ghost':''}" id="again">もう一度プレイ</button><button class="btn ghost" id="toTitle">タイトルへ</button></div></div>`;
+  if(next) nextCh.onclick=()=>play(next);
+  again.onclick=()=>play(CH); toTitle.onclick=title;
 }
 function title(){
-  applyState({...STEPS[0].state,P:{x:-1.2,z:2.0,ry:0.5},S:{x:0.4,z:2.3,ry:-0.6}});
-  camera.position.set(1.4,1.7,6.2); camLook.set(-0.3,1.0,1.6);
+  setSign('株式会社ストレンジ','STRANGE Inc.'); setPip(null);
+  applyState({U:RECEP_U,P:{x:-1.2,z:2.0,ry:0.5},S:{x:0.4,z:2.3,ry:-0.6},Y:{x:-0.3,z:3.3,ry:-0.1},C:{x:1.4,z:3.2,ry:-0.5}});
+  camera.position.set(1.0,1.8,7.4); camLook.set(-0.1,1.0,2.4);
   screenEl.hidden=false;
   screenEl.innerHTML=`<div class="card">
     <div class="eyebrow">STRANGE KEIGO WORLD</div>
-    <h1>企業訪問シミュレーター</h1>
-    <p>3つの行動から正しいものを選んで、面談を最後まで乗り切ろう。選んだとおりにキャラクターが動き、相手の反応で印象が上下します。</p>
-    <div class="chapters">
-      <button class="chap sel" id="ch1"><span class="no">1</span><span><b>企業訪問・面談</b><small>受付 → 名刺交換 → 面談 → 退出（全10問）</small></span></button>
-      <button class="chap" disabled><span class="no">2</span><span><b>電話でアポ取り</b><small>準備中</small></span></button>
-      <button class="chap" disabled><span class="no">3</span><span><b>社内で上司と</b><small>準備中</small></span></button>
-    </div>
-    <button class="btn" id="startBtn">スタート（音声あり）</button>
-    <p style="margin:10px 0 0;font-size:12px">セリフは画面タップで送れます。右上の🔊で音声をオフにできます。</p></div>`;
-  startBtn.onclick=ch1.onclick=()=>{ pickVoice(); play(); };
+    <h1>ビジネス敬語シミュレーター</h1>
+    <p>3つの行動から正しいものを選んで、場面を最後まで乗り切ろう。選んだとおりにキャラクターが動き、相手の反応で印象が上下します。</p>
+    <div class="chapters">${CHAPTERS.map((c,i)=>`<button class="chap" data-i="${i}"><span class="no">${c.no}</span>
+      <span><b>${c.title}</b><small>${c.sub}（全${c.steps.length}問）</small></span><span class="rk">${BEST[c.id]||''}</span></button>`).join('')}</div>
+    <p style="margin:10px 0 0;font-size:12px">音声が流れます。セリフは画面タップで送れます。右上の🔊で音声をオフにできます。</p></div>`;
+  screenEl.querySelectorAll('.chap').forEach(b=>b.onclick=()=>{ pickVoice(); play(CHAPTERS[+b.dataset.i]); });
 }
 soundBtn.onclick=()=>{ soundOn=!soundOn; soundBtn.textContent=soundOn?'🔊':'🔇'; if(!soundOn) try{speechSynthesis.cancel();}catch(e){} };
 title();
