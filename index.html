@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strange Keigo World</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8ef; --surface:#ffffff; --surface2:#fff1dc; --text:#2b2320; --muted:#7a6c64; --border:#efdcc4;
+  --accent:#ff9f1c; --accent-ink:#3a2200;
+  --son:#e8456b; --son-bg:#ffe3ea;
+  --ken:#2f7de1; --ken-bg:#e1eeff;
+  --tei:#1fa37a; --tei-bg:#dcf5ec;
+  --ok:#22a559; --ok-bg:#e2f7e9; --ng:#e04848; --ng-bg:#fde6e6;
+  --shadow:0 3px 0 rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1816; --surface:#272220; --surface2:#332b26; --text:#f5ece6; --muted:#b4a59b; --border:#43382f;
+    --accent:#ffb347; --accent-ink:#2a1700;
+    --son:#ff7a98; --son-bg:#4a2430; --ken:#6aa8ff; --ken-bg:#1f3350; --tei:#4fd1a5; --tei-bg:#183d32;
+    --ok:#4fd17f; --ok-bg:#1b3b27; --ng:#ff7474; --ng-bg:#4a2222; --shadow:0 3px 0 rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1816; --surface:#272220; --surface2:#332b26; --text:#f5ece6; --muted:#b4a59b; --border:#43382f;
+  --accent:#ffb347; --accent-ink:#2a1700;
+  --son:#ff7a98; --son-bg:#4a2430; --ken:#6aa8ff; --ken-bg:#1f3350; --tei:#4fd1a5; --tei-bg:#183d32;
+  --ok:#4fd17f; --ok-bg:#1b3b27; --ng:#ff7474; --ng-bg:#4a2222; --shadow:0 3px 0 rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:"M PLUS Rounded 1c",system-ui,sans-serif;line-height:1.6;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:600px;margin:0 auto;padding:0 16px 140px}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border)}
+header.top .in{max-width:600px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.logo{font-weight:800;font-size:16px;white-space:nowrap;display:flex;align-items:center;gap:6px;background:none;border:0;padding:0}
+.logo .mark{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:16px}
+.stats{margin-left:auto;display:flex;gap:10px;font-weight:700;font-size:14px}
+.stat{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.toggles{display:flex;gap:6px;margin:14px 0 4px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--border);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+h1{font-size:24px;margin:18px 0 4px;line-height:1.3}
+h2{font-size:18px;margin:26px 0 10px}
+.lead{color:var(--muted);margin:0 0 14px;font-size:14px}
+.en{color:var(--muted);font-size:12.5px;display:block;line-height:1.4}
+body:not(.show-en) .en{display:none}
+.yomi{display:block;font-size:11px;color:var(--muted);font-weight:400;line-height:1.2}
+body:not(.show-yomi) .yomi{display:none}
+
+/* home cards */
+.modes{display:grid;gap:12px}
+.mode{display:flex;gap:14px;align-items:center;text-align:left;background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:14px;box-shadow:var(--shadow);transition:transform .08s}
+.mode:active{transform:translateY(2px);box-shadow:none}
+.mode .ic{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:26px}
+.mode b{font-size:16px;display:block}
+.mode small{color:var(--muted);font-size:13px;display:block;line-height:1.45}
+.mode .lv{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+
+/* type badges */
+.t-son{--c:var(--son);--cb:var(--son-bg)} .t-ken{--c:var(--ken);--cb:var(--ken-bg)} .t-tei{--c:var(--tei);--cb:var(--tei-bg)}
+.badge{display:inline-block;padding:1px 10px;border-radius:999px;background:var(--cb);color:var(--c);font-weight:800;font-size:13px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tcard{background:var(--cb);border-radius:16px;padding:12px 10px;text-align:center}
+.tcard .arrow{font-size:28px;line-height:1}
+.tcard b{color:var(--c);display:block;font-size:17px}
+.tcard p{margin:4px 0 0;font-size:12.5px;line-height:1.45}
+.tip{background:var(--surface);border:2px dashed var(--border);border-radius:16px;padding:12px 14px;margin:10px 0;font-size:14px}
+.tip b.h{display:block;margin-bottom:4px}
+
+/* dictionary */
+.search{width:100%;padding:10px 14px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);font:inherit;margin-bottom:10px}
+.vrow{background:var(--surface);border:2px solid var(--border);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.vrow > button.vh{width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;background:none;border:0;text-align:left}
+.vrow .base{font-size:19px;font-weight:800}
+.vrow .mean{color:var(--muted);font-size:13px}
+.vrow .chev{margin-left:auto;color:var(--muted);transition:transform .2s}
+.vrow.open .chev{transform:rotate(90deg)}
+.vbody{display:none;padding:0 12px 12px;gap:8px}
+.vrow.open .vbody{display:grid}
+.vcell{border-radius:12px;padding:8px 10px;background:var(--cb);display:flex;align-items:flex-start;gap:8px}
+.vcell .lab{flex:none;color:var(--c);font-weight:800;font-size:13px;width:52px;padding-top:3px}
+.words{display:flex;flex-wrap:wrap;gap:6px}
+.word{background:var(--surface);border-radius:10px;padding:3px 10px;font-weight:700;border:0;text-align:left}
+.note{font-size:12.5px;color:var(--muted);margin:2px 2px 0}
+
+/* quiz */
+.qtop{display:flex;align-items:center;gap:10px;margin:14px 0}
+.x{border:0;background:none;font-size:22px;color:var(--muted);padding:0 4px}
+.bar{flex:1;height:14px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.hearts{font-size:16px;letter-spacing:1px;white-space:nowrap}
+.combo{text-align:center;font-weight:800;color:var(--accent);height:22px;font-size:14px}
+.scene{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:14px;margin-bottom:12px}
+.scene .place{font-size:12px;font-weight:800;color:var(--muted)}
+.people{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.person{display:flex;align-items:center;gap:6px;background:var(--surface2);border-radius:12px;padding:4px 10px 4px 6px;font-size:13px}
+.person .em{font-size:22px}
+.person small{display:block;color:var(--muted);font-size:11px;line-height:1.2}
+.qlabel{font-size:13px;font-weight:800;color:var(--muted);margin:4px 0}
+.prompt{font-size:20px;font-weight:800;margin:4px 0 14px;line-height:1.5}
+.big{font-size:34px;display:inline-block;padding:2px 14px;border-radius:14px;background:var(--surface);border:2px solid var(--border);margin:4px 0}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface);border:2px solid var(--border);border-bottom-width:4px;border-radius:16px;padding:12px 14px;font-size:16px;font-weight:700;transition:transform .06s}
+.opt:active{transform:translateY(2px)}
+.opt .k{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--border);display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.opt.typebtn{justify-content:center;text-align:center;flex-direction:column;gap:0;background:var(--cb);border-color:var(--c);color:var(--c);font-size:19px}
+.opt.typebtn small{font-size:12px;color:var(--text);font-weight:400}
+.opt.sel-ok{background:var(--ok-bg);border-color:var(--ok)}
+.opt.sel-ng{background:var(--ng-bg);border-color:var(--ng);animation:shake .3s}
+.opt.dim{opacity:.45}
+.opt:disabled{cursor:default}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.speak{border:0;background:var(--surface2);border-radius:10px;padding:4px 10px;font-size:15px}
+
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:10;transform:translateY(110%);transition:transform .25s ease}
+.sheet.show{transform:none}
+.sheet .in{max-width:600px;margin:0 auto;padding:14px 16px 18px;border-radius:20px 20px 0 0;max-height:60vh;overflow:auto}
+.sheet.ok .in{background:var(--ok-bg);border-top:3px solid var(--ok)}
+.sheet.ng .in{background:var(--ng-bg);border-top:3px solid var(--ng)}
+.sheet h3{margin:0 0 4px;font-size:19px}
+.sheet.ok h3{color:var(--ok)} .sheet.ng h3{color:var(--ng)}
+.sheet .exp{font-size:14.5px;margin:0 0 10px}
+.sheet .exp b{color:var(--text)}
+.sheet .ans{font-weight:800;font-size:16px;margin:2px 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-weight:800;font-size:16px;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.btn.ghost{background:var(--surface);color:var(--text);border:2px solid var(--border);box-shadow:none}
+.sheet.ok .btn{background:var(--ok);color:#fff} .sheet.ng .btn{background:var(--ng);color:#fff}
+
+/* result */
+.result{text-align:center;padding-top:20px}
+.result .trophy{font-size:64px}
+.result .score{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.result .score div{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:10px 4px}
+.result .score b{display:block;font-size:22px}
+.result .score small{color:var(--muted);font-size:12px}
+.review{text-align:left;margin:14px 0}
+.review li{background:var(--surface);border-radius:12px;padding:8px 12px;margin-bottom:8px;list-style:none;font-size:14px}
+.review ul{padding:0}
+.stack{display:grid;gap:10px;margin-top:16px}
+
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
+.confetti span{position:absolute;top:-30px;font-size:22px;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.7}}
+@media (max-width:380px){.trio{grid-template-columns:1fr}.prompt{font-size:18px}}
+</style>
+</head>
+<body class="show-yomi">
+<header class="top"><div class="in">
+  <button class="logo" id="homeBtn" aria-label="ホームへ"><span class="mark">敬</span>Strange Keigo World</button>
+  <div class="stats">
+    <span class="stat" title="連続日数">🔥<span id="sStreak">0</span></span>
+    <span class="stat" title="経験値">⭐<span id="sXp">0</span></span>
+    <span class="stat" title="レベル">Lv<span id="sLv">1</span></span>
+  </div>
+</div></header>
+<main class="wrap" id="app"></main>
+<div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
+
+<script>
+/* =========================================================
+   データ：添付の対照表＋「ビジネスマナーの基本」（山形大学）より
+   ========================================================= */
+const TYPES = {
+  son:{ja:'尊敬語',ro:'sonkeigo',en:'Respectful',arrow:'⬆️',who:'相手の動作',desc:'相手（目上）の動作を高める',enDesc:'Raise the other person’s action'},
+  ken:{ja:'謙譲語',ro:'kenjōgo',en:'Humble',arrow:'⬇️',who:'自分（身内）の動作',desc:'自分の動作をへりくだって相手を立てる',enDesc:'Lower your own action'},
+  tei:{ja:'丁寧語',ro:'teineigo',en:'Polite',arrow:'↔️',who:'聞き手への丁寧さ',desc:'「です・ます」で聞き手に丁寧に',enDesc:'Polite です/ます style'},
+};
+
+// [基本形, 読み, 英語, 尊敬語[], 謙譲語[], 丁寧語[], メモ]
+const VERBS = [
+  ['する','する','do',['なさる','される'],['いたす','させていただく'],['します'],'「させていただく」は相手や第三者の許可があるのが前提のときに使う。'],
+  ['言う','いう','say',['おっしゃる','言われる'],['申す','申し上げる'],['言います']],
+  ['行く','いく','go',['いらっしゃる','おいでになる'],['伺う','参る'],['行きます']],
+  ['来る','くる','come',['いらっしゃる','お越しになる','お見えになる'],['伺う','参る'],['来ます']],
+  ['いる','いる','be (exist)',['いらっしゃる','おいでになる'],['おる'],['います']],
+  ['知る','しる','know',['ご存じだ','お知りになる'],['存じる','存じ上げる','承知する'],['知っています'],'尊敬語は「ご存じですか」の形でよく使う。'],
+  ['食べる','たべる','eat',['召し上がる','お上がりになる'],['いただく','頂戴する'],['食べます']],
+  ['見る','みる','see / look',['ご覧になる'],['拝見する'],['見ます']],
+  ['聞く','きく','hear / ask',['お聞きになる'],['拝聴する','伺う'],['聞きます']],
+  ['座る','すわる','sit',['お掛けになる'],['座らせていただく'],['座ります']],
+  ['会う','あう','meet',['お会いになる','会われる'],['お目にかかる'],['会います']],
+  ['伝える','つたえる','tell / convey',['お伝えになる'],['申し伝える'],['伝えます']],
+  ['わかる','わかる','understand',['おわかりになる'],['かしこまる','承知する'],['わかります'],'返事では「かしこまりました」「承知しました」の形で使う。'],
+  ['読む','よむ','read',['お読みになる'],['拝読する'],['読みます']],
+  ['与える','あたえる','give',['くださる','お与えになる'],['差し上げる'],['あげます','与えます'],'「くださる」は相手が自分にくれるとき。'],
+  ['受け取る','うけとる','receive',['お受け取りになる'],['頂戴する','拝受する'],['受け取ります']],
+  ['思う','おもう','think / feel',['お思いになる','おぼし召す'],['存じる'],['思います']],
+  ['買う','かう','buy',['お買いになる','お求めになる'],['買わせていただく'],['買います']],
+  ['考える','かんがえる','consider',['お考えになる'],['拝察する'],['考えます']],
+  ['待つ','まつ','wait',['お待ちになる'],['お待ちする'],['待ちます']],
+  ['帰る','かえる','go home / leave',['お帰りになる','帰られる'],['失礼する','おいとまする'],['帰ります']],
+  ['持つ','もつ','hold / carry',['お持ちになる'],['お持ちする'],['持ちます']],
+  ['利用する','りようする','use',['ご利用になる'],['利用させていただく'],['利用します']],
+].map(([base,yomi,en,son,ken,tei,note])=>({base,yomi,en,son,ken,tei,note}));
+
+// 呼び方（名詞）
+const NOUNS = [
+  ['家','home','お宅（おたく）','拙宅（せったく）'],
+  ['会社','company','御社（おんしゃ）〔話す〕／貴社（きしゃ）〔書く〕','弊社（へいしゃ）'],
+  ['学校','school','御校（おんこう）／貴校（きこう）','弊校（へいこう）'],
+];
+
+// 漢字の読み（ふりがな表示用）
+const YOMI = {
+  '言われる':'いわれる','申す':'もうす','申し上げる':'もうしあげる','言います':'いいます','伺う':'うかがう','参る':'まいる',
+  '行きます':'いきます','お越しになる':'おこしになる','お見えになる':'おみえになる','来ます':'きます','ご存じだ':'ごぞんじだ',
+  'お知りになる':'おしりになる','存じる':'ぞんじる','存じ上げる':'ぞんじあげる','承知する':'しょうちする','知っています':'しっています',
+  '召し上がる':'めしあがる','お上がりになる':'おあがりになる','頂戴する':'ちょうだいする','食べます':'たべます','ご覧になる':'ごらんになる',
+  '拝見する':'はいけんする','見ます':'みます','お聞きになる':'おききになる','拝聴する':'はいちょうする','聞きます':'ききます',
+  'お掛けになる':'おかけになる','座らせていただく':'すわらせていただく','座ります':'すわります','お会いになる':'おあいになる','会われる':'あわれる',
+  'お目にかかる':'おめにかかる','会います':'あいます','お伝えになる':'おつたえになる','申し伝える':'もうしつたえる','伝えます':'つたえます',
+  'お読みになる':'およみになる','拝読する':'はいどくする','読みます':'よみます','お与えになる':'おあたえになる','差し上げる':'さしあげる',
+  '与えます':'あたえます','お受け取りになる':'おうけとりになる','拝受する':'はいじゅする','受け取ります':'うけとります','お思いになる':'おおもいになる',
+  'おぼし召す':'おぼしめす','思います':'おもいます','お買いになる':'おかいになる','お求めになる':'おもとめになる','買わせていただく':'かわせていただく',
+  '買います':'かいます','お考えになる':'おかんがえになる','拝察する':'はいさつする','考えます':'かんがえます','お待ちになる':'おまちになる',
+  'お待ちする':'おまちする','待ちます':'まちます','お帰りになる':'おかえりになる','帰られる':'かえられる','失礼する':'しつれいする',
+  '帰ります':'かえります','お持ちになる':'おもちになる','お持ちする':'おもちする','持ちます':'もちます','ご利用になる':'ごりようになる',
+  '利用させていただく':'りようさせていただく','利用します':'りようします',
+  // よくある間違い
+  'おっしゃられる':'','ご覧になられる':'ごらんになられる','お越しになられる':'おこしになられる','申される':'もうされる',
+  '拝見される':'はいけんされる','召し上がられる':'めしあがられる','お読みになられる':'およみになられる','お帰りになられる':'おかえりになられる',
+  'お聞きになられる':'おききになられる','お会いになられる':'おあいになられる','お待ちになられる':'おまちになられる','参られる':'まいられる',
+  'お考えになられる':'おかんがえになられる',
+};
+
+// よくある間違い（二重敬語・尊敬＋謙譲の混ざり）
+const TRAPS = {
+  '言う':['おっしゃられる','申される'], '見る':['ご覧になられる','拝見される'], '来る':['お越しになられる','参られる'],
+  '行く':['いらっしゃられる','参られる'], '読む':['お読みになられる'], '帰る':['お帰りになられる'], '聞く':['お聞きになられる'],
+  '会う':['お会いになられる'], '待つ':['お待ちになられる'], '食べる':['召し上がられる'], '考える':['お考えになられる'],
+};
+const trapWhy = w => /られる$/.test(w) && !/^(申|参|拝)/.test(w)
+  ? `「${w}」は尊敬語にさらに「〜られる」を重ねた<b>二重敬語</b>です。`
+  : `「${w}」は謙譲語に尊敬の「れる・られる」を付けた<b>誤用</b>です。謙譲語は相手には使えません。`;
+
+/* ---------- ケーススタディ ---------- */
+// type: その場面で使う敬語（null=1問だけの場面）／opts[0]が正解
+const CASES = [
+  {place:'🏢 社内',people:[['👨‍💼','山田部長','あなたの上司']],
+   sit:'昨日、山田部長に資料を渡しました。部長がもう資料を見たか確認したいです。',en:'You gave your manager a document yesterday. Ask if they have looked at it.',
+   q:'「見る」のはだれ？ 何語を使う？',type:'son',typeWhy:'「見る」のは部長＝目上の相手。相手の動作を高めるので<b>尊敬語</b>。',
+   opts:['部長、資料はもうご覧になりましたか。','部長、資料はもう拝見しましたか。','部長、資料はもうご覧になられましたか。','部長、資料はもう見ましたか。'],
+   why:'「ご覧になる」が「見る」の尊敬語。「拝見する」は自分の動作に使う謙譲語。「ご覧になられる」は<b>二重敬語</b>。「見ましたか」は丁寧語だけで、上司には少し物足りません。'},
+  {place:'🏢 社内',people:[['👨‍💼','山田部長','あなたの上司']],
+   sit:'山田部長から「昨日の資料、見てくれた？」と聞かれました。見たことを伝えます。',en:'Your manager asks if you looked at the document. Say you did.',
+   q:'「見た」のはだれ？ 何語を使う？',type:'ken',typeWhy:'「見た」のは自分。自分の動作をへりくだるので<b>謙譲語</b>。',
+   opts:['はい、拝見しました。','はい、ご覧になりました。','はい、拝見されました。','はい、見てあげました。'],
+   why:'「拝見する」が「見る」の謙譲語。「ご覧になる」は相手に使う尊敬語なので自分には×。「拝見される」は謙譲語＋尊敬の「れる」が混ざった誤用です。'},
+  {place:'📞 電話',people:[['🧑‍💼','佐藤様','取引先（社外）'],['👨‍💼','山田部長','あなたの上司・席にいない']],
+   sit:'取引先の佐藤様から電話。「山田部長はいらっしゃいますか？」と聞かれました。部長は席を外しています。',en:'A client calls for your manager, who is away from the desk.',
+   q:'社外の人に、自分の上司のことを話すときは？',type:'ken',typeWhy:'社外（ソト）の人と話すとき、自分の会社の人は上司でも「身内（ウチ）」。身内の動作は<b>謙譲語</b>で表し、「部長」などの敬称も付けません。',
+   opts:['申し訳ございません。山田はただいま席を外しております。','申し訳ございません。山田部長はただいまいらっしゃいません。','申し訳ございません。山田部長は席を外されています。','すみません、山田さんは今いないです。'],
+   why:'ポイントは<b>ウチ・ソト</b>。社外の人には自社の上司も「山田」と呼び、「おる」（「いる」の謙譲語）を使います。'},
+  {place:'🏢 社内',people:[['👨‍💼','山田部長','あなたの上司'],['🧑‍💼','佐藤様','取引先のお客様']],
+   sit:'取引先の佐藤様が受付に来ました。山田部長に知らせます。',en:'A client has arrived at reception. Tell your manager.',
+   q:'「来た」のはだれ？ 何語を使う？',type:'son',typeWhy:'「来た」のはお客様（ソトの人）。お客様を高めるので<b>尊敬語</b>。',
+   opts:['部長、佐藤様がいらっしゃいました。','部長、佐藤様が参りました。','部長、佐藤様がお越しになられました。','部長、佐藤さんが来ました。'],
+   why:'「いらっしゃる」「お越しになる」が「来る」の尊敬語。「参る」は謙譲語なのでお客様には×。「お越しになられる」は二重敬語です（正しくは「お越しになりました」）。'},
+  {place:'🎓 面接',people:[['👩‍💼','面接官','応募先の会社の人']],
+   sit:'面接が始まりました。自分の名前を名乗ります。',en:'The interview starts. Introduce yourself.',
+   q:'「言う（名乗る）」のはだれ？ 何語を使う？',type:'ken',typeWhy:'名乗るのは自分。<b>謙譲語</b>「申す」を使います。',
+   opts:['山形大学の田中と申します。','山形大学の田中とおっしゃいます。','山形大学の田中と申されます。','山形大学の田中って言います。'],
+   why:'「申す」は「言う」の謙譲語。「おっしゃる」は尊敬語なので自分には×。「申される」は謙譲＋尊敬が混ざった誤用です。'},
+  {place:'☕ 応接室',people:[['🧑‍💼','お客様','来社した取引先']],
+   sit:'応接室でお客様にお茶とお菓子を出しました。どうぞ食べてくださいと勧めます。',en:'You served tea and sweets to a guest. Invite them to eat.',
+   q:'「食べる」のはだれ？ 何語を使う？',type:'son',typeWhy:'食べるのはお客様。<b>尊敬語</b>「召し上がる」。',
+   opts:['どうぞお召し上がりください。','どうぞいただいてください。','どうぞ頂戴してください。','どうぞ食べてください。'],
+   why:'「召し上がる」が「食べる」の尊敬語。「いただく」「頂戴する」は自分が食べる・もらうときの謙譲語です。<br>※「お召し上がりください」は形としては二重敬語ですが、慣習として定着しているので使ってOK。'},
+  {place:'📞 電話',people:[['👩‍💼','人事の鈴木様','訪問先の担当者']],
+   sit:'企業訪問のアポ取りの電話。明日10時に自分が訪問したいと伝えます。',en:'Call to make an appointment. You want to visit tomorrow at 10.',
+   q:'「行く」のはだれ？ 何語を使う？',type:'ken',typeWhy:'行くのは自分。<b>謙譲語</b>「伺う」「参る」を使います。',
+   opts:['明日の10時に伺ってもよろしいでしょうか。','明日の10時にいらっしゃってもよろしいでしょうか。','明日の10時に行かれてもよろしいでしょうか。','明日の10時に行ってもいいですか。'],
+   why:'「伺う」は「行く・訪ねる」の謙譲語。資料の例文「〇時にお邪魔させていただきたいのですが」も同じ考え方です。'},
+  {place:'📞 電話',people:[['🧑','受付の方','電話に出た人'],['👩‍💼','鈴木様','担当者・外出中']],
+   sit:'電話したら、担当の鈴木様は外出中でした。いつ戻るか聞きます。',en:'The person you called is out. Ask when they will be back.',
+   q:'「戻る」のはだれ？ 何語を使う？',type:'son',typeWhy:'戻るのは鈴木様（相手側の人）。<b>尊敬語</b>。',
+   opts:['鈴木様はいつ頃お戻りでしょうか。','鈴木様はいつ頃お戻りいたしますか。','鈴木様はいつ頃戻られられますか。','鈴木さんはいつ帰りますか。'],
+   why:'「お戻りになる／お戻りです」が尊敬表現。資料にも、不在なら「いつ頃お戻りでしょうか？」と時間を確認してかけ直す、とあります。「お戻りいたす」は謙譲語。'},
+  {place:'📞 電話',people:[['🧑‍💼','佐藤様','取引先（社外）'],['👩','鈴木','あなたの同僚・外出中']],
+   sit:'佐藤様から、同僚の鈴木への伝言を頼まれました。必ず伝えると答えます。',en:'A client leaves a message for your coworker. Say you will pass it on.',
+   q:'「伝える」のはだれ？ 何語を使う？',type:'ken',typeWhy:'伝えるのは自分。伝える先の鈴木も身内（ウチ）。<b>謙譲語</b>「申し伝える」。',
+   opts:['かしこまりました。鈴木に申し伝えます。','かしこまりました。鈴木様にお伝えになります。','かしこまりました。鈴木さんにお伝えします。','了解です。鈴木に伝えときます。'],
+   why:'「申し伝える」は「伝える」の謙譲語。社外の人の前では同僚も「鈴木」と呼びます（「さん」「様」は付けない）。「お伝えになる」は尊敬語です。'},
+  {place:'🏢 社内',people:[['🧑','高橋さん','同じ年に入社した同期']],
+   sit:'同期の高橋さんに、配られた資料をもう読んだか聞きます。仕事中の会話です。',en:'Ask a same-year colleague if they have read the handout (at work).',
+   q:'相手は対等な同期。何語を使う？',type:'tei',typeWhy:'同期は対等な関係。職場では<b>丁寧語</b>（です・ます）で十分です。',
+   opts:['高橋さん、資料もう読みましたか。','高橋さん、資料もう拝読しましたか。','高橋さん、資料もうお読みになられましたか。','高橋、資料読んだ？'],
+   why:'丁寧語「読みました」でOK。「拝読する」は自分の動作に使う謙譲語なので×。「お読みになられる」は二重敬語。タメ口は仕事中は避けたいところ。'},
+  {place:'🏢 社内',people:[['👨‍💼','山田部長','あなたの上司']],
+   sit:'明日の会議に、山田部長が何時に来るか聞きます。',en:'Ask your manager what time they will come tomorrow.',
+   q:'「来る」のはだれ？ 何語を使う？',type:'son',typeWhy:'来るのは部長。<b>尊敬語</b>「いらっしゃる」「お見えになる」。',
+   opts:['部長、明日は何時にいらっしゃいますか。','部長、明日は何時に参りますか。','部長、明日は何時に伺いますか。','部長、明日は何時に来ますか。'],
+   why:'「参る」「伺う」は自分が行く・来るときの謙譲語。上司の動作には尊敬語「いらっしゃる」を使います。'},
+  {place:'🏢 社内',people:[['👨‍💼','山田部長','あなたの上司']],
+   sit:'山田部長から「この書類を3時までにまとめておいて」と頼まれました。引き受けます。',en:'Your manager asks you to finish a document by 3. Accept.',
+   q:'「わかる・引き受ける」のはだれ？ 何語を使う？',type:'ken',typeWhy:'わかったのは自分。<b>謙譲語</b>「かしこまる」「承知する」。',
+   opts:['かしこまりました。','おわかりになりました。','了解です。','わかりましたです。'],
+   why:'上司やお客様には「かしこまりました」「承知しました」が定番。「了解です」は目上の人には避けたほうが無難。「おわかりになる」は尊敬語です。'},
+  // ここから1問だけの場面（クッション言葉・呼び方・マナー）
+  {place:'🏢 社内',people:[['👩‍💼','中村さん','忙しそうな先輩']],
+   sit:'忙しそうな先輩に、資料のチェックをお願いしたいです。',en:'Ask a busy senior coworker to check your document.',
+   q:'いちばん良い頼み方は？',type:null,
+   opts:['お忙しいところ恐れ入りますが、資料を確認していただけますか。','資料、確認してください。','せっかくですが、資料を確認していただけますか。','ひまなときでいいので、資料見ておいてもらえる？'],
+   why:'頼むときは<b>クッション言葉</b>「お忙しいところ恐れ入りますが」「お手数をおかけいたしますが」で始め、「〜していただけますか」で結びます。「せっかくですが」は断るときのクッション言葉。'},
+  {place:'📞 電話',people:[['🧑‍💼','佐藤様','取引先（社外）']],
+   sit:'取引先の佐藤様から食事に誘われましたが、その日は予定があります。断ります。',en:'A client invites you to dinner but you are busy. Decline.',
+   q:'いちばん良い断り方は？',type:null,
+   opts:['せっかくですが、その日はあいにく先約がございまして…','お忙しいところ恐れ入りますが、行けません。','無理です。','了解です、行きません。'],
+   why:'断るときのクッション言葉は「せっかくですが」「大変申し訳ありませんが」。「お忙しいところ恐れ入りますが」は頼むときに使います。'},
+  {place:'🎓 面接',people:[['👩‍💼','面接官','応募先の会社の人']],
+   sit:'面接で「〇〇に入社したいと考えております」と話します。相手の会社を何と呼ぶ？',en:'In an interview, how do you refer to the company you are applying to?',
+   q:'〇〇に入るのは？',type:null,
+   opts:['御社（おんしゃ）','弊社（へいしゃ）','お会社','そちらの会社さん'],
+   why:'話し言葉では「御社」、メールや履歴書など書き言葉では「貴社」。自分の会社は「弊社」。学校なら「御校・貴校／弊校」。'},
+  {place:'🎓 面接',people:[['👩‍💼','面接官','応募先の会社の人']],
+   sit:'面接の受け答え。自分のことを何と言う？',en:'How should you refer to yourself in an interview?',
+   q:'いちばんふさわしいのは？',type:null,
+   opts:['わたくし','僕','自分','うち'],
+   why:'ビジネスの場では、自分のことは「わたくし」と言うのが基本です。'},
+  {place:'🎓 面接',people:[['👩‍💼','面接官','応募先の会社の人']],
+   sit:'面談が終わり、一度立ってお礼を言いました。ドアの前で最後に言うひとことは？',en:'The interview is over. What do you say at the door when leaving?',
+   q:'最後のひとことは？',type:null,
+   opts:['失礼いたします。','お疲れさまでした。','ご苦労さまでした。','さようなら。'],
+   why:'退出するときは「失礼します／失礼いたします」。「ご苦労さま」は目上から目下に使う言葉なので×。'},
+];
+
+/* ---------- ビジネスマナークイズ ---------- */
+const MANNERS = [
+  {q:'基本のお辞儀はどれ？',opts:['敬礼（約30度）','会釈（約15度）','最敬礼（約45度）','深ければ深いほど良いので90度'],why:'お辞儀は「会釈」「敬礼」「最敬礼」の3種類。基本は<b>敬礼の30度</b>。相手の膝あたりを見るイメージです。'},
+  {q:'お詫びのときや、お客様のお見送りでするお辞儀は？',opts:['最敬礼（約45度）','会釈（約15度）','敬礼（約30度）','お辞儀はしない'],why:'お詫びやお見送りは<b>最敬礼（約45度）</b>。'},
+  {q:'通路ですれ違うときや入室のときのお辞儀は？',opts:['会釈（約15度）','最敬礼（約45度）','敬礼（約30度）','手を振る'],why:'すれ違いや入室時は<b>会釈（約15度）</b>。'},
+  {q:'「先言後礼（せんげんごれい）」とは？',opts:['挨拶の言葉を言ってから、お辞儀をする','お辞儀をしてから、挨拶の言葉を言う','挨拶の言葉とお辞儀を同時にする','先に名刺を出してから礼をする'],why:'言葉が先、お辞儀が後。言葉とお辞儀を同時にするとメリハリがなくなります。'},
+  {q:'マナー違反のお辞儀はどれ？',opts:['書類を書きながらお辞儀する','立ち止まってお辞儀する','一度だけ丁寧にお辞儀する','お辞儀を戻したら相手の目を見る'],why:'「〜しながら」のお辞儀は、他の作業を優先していることになり失礼。ほかにも「ぺこぺこ何度も」「歩きながら」はNG。'},
+  {q:'午後に会社を訪問。挨拶で避けたほうがいいのは？',opts:['「おはようございます」','「こんにちは」','「お世話になっております」','「本日はよろしくお願いいたします」'],why:'アルバイトのように昼夜問わず「おはようございます」を使わないよう注意。'},
+  {q:'面談で座るタイミングは？',opts:['担当者から着席を勧められてから','部屋に入ったらすぐ','担当者が来る前に座って待つ','座りたくなったら'],why:'担当者から勧められてから座ります。応接室で待っている場合は、担当者が来たら一度立って挨拶します。'},
+  {q:'面談中、カバンはどこに置く？',opts:['足元','となりの椅子の上','机の上','ひざの上'],why:'カバンは椅子に置かず<b>足元</b>に置きます。'},
+  {q:'電話を切るときのマナーは？',opts:['相手が切るのを待ってから切る','用件が済んだら自分からすぐ切る','切る前に何も言わない','相手より先に切る'],why:'相手が電話を切る前に切らないよう注意。切る前に日時などを再確認しましょう。'},
+  {q:'企業を訪問するとき、スマホは？',opts:['会社に入ったら電源を切る','机の上に置いておく','待ち時間にチェックする','音量を小さくしておく'],why:'マナーモードでもバイブ音が響くことがあるので、会社に入ったら電源OFFがおすすめ。待ち時間のスマホいじりも慎みます。'},
+  {q:'メールの件名（タイトル）はどう書く？',opts:['要件が一目でわかる具体的な件名＋自分の名前','「お世話になっております」','件名は空欄','「至急！！」'],why:'件名は具体的かつ端的に。件名の後ろに名前を入れます。送信前に必ず読み直しましょう。'},
+  {q:'面接の待ち時間、印象が悪くなるのは？',opts:['足を組んでスマホをいじる','静かに座って待つ','資料を読み返す','姿勢を正して待つ'],why:'あくび・背伸び・ペン回し・貧乏ゆすり・足組み・携帯いじりなどの<b>非言語コミュニケーション</b>にも注意。'},
+];
+
+/* =========================================================
+   状態・保存
+   ========================================================= */
+const KEY='skw-v1';
+let S = {xp:0,streak:0,lastDay:'',yomi:true,en:false,best:{},seen:0};
+try{ const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(S,JSON.parse(raw)); }catch(e){}
+const save=()=>{ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} };
+const today=()=>new Date().toISOString().slice(0,10);
+function touchStreak(){
+  const t=today(); if(S.lastDay===t) return;
+  const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+  S.streak = S.lastDay===y ? S.streak+1 : 1; S.lastDay=t; save();
+}
+const level=()=>Math.floor(S.xp/100)+1;
+function paintStats(){
+  sXp.textContent=S.xp; sLv.textContent=level(); sStreak.textContent=S.streak;
+  document.body.classList.toggle('show-yomi',S.yomi); document.body.classList.toggle('show-en',S.en);
+}
+
+/* ---------- 音・読み上げ ---------- */
+let AC=null;
+function beep(ok){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const notes= ok?[660,880]:[220,180];
+    notes.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=ok?'triangle':'sawtooth';o.frequency.value=f;
+      g.gain.setValueAtTime(.0001,AC.currentTime+i*.09);g.gain.exponentialRampToValueAtTime(.12,AC.currentTime+i*.09+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+i*.09+.18);o.connect(g).connect(AC.destination);o.start(AC.currentTime+i*.09);o.stop(AC.currentTime+i*.09+.2);});
+  }catch(e){}
+}
+function speak(text){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text.replace(/（.*?）|〔.*?〕/g,'')); u.lang='ja-JP'; u.rate=.9;
+    const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith('ja')); if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+const spk = t => `<button class="speak" data-say="${t}" aria-label="読み上げ">🔊</button>`;
+document.addEventListener('click',e=>{const b=e.target.closest('[data-say]'); if(b){e.stopPropagation();speak(b.dataset.say);}});
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const app=$('#app'), sheet=$('#sheet'), sheetIn=$('#sheetIn');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+const pick=a=>a[Math.random()*a.length|0];
+const w=(word)=>{const y=YOMI[word];return `<span class="w">${word}${y?`<span class="yomi">${y}</span>`:''}</span>`;};
+const T=(k)=>`<span class="badge t-${k}">${TYPES[k].ja}</span>`;
+const typeOf=(word)=>{for(const v of VERBS)for(const k of ['son','ken','tei'])if(v[k].includes(word))return k;return null;};
+
+/* =========================================================
+   画面：ホーム
+   ========================================================= */
+function home(){
+  hideSheet();
+  app.innerHTML=`
+  <div class="toggles">
+    <button class="chip" id="tgY" aria-pressed="${S.yomi}">ふりがな</button>
+    <button class="chip" id="tgE" aria-pressed="${S.en}">English</button>
+  </div>
+  <h1>敬語を、ゲームで身につけよう</h1>
+  <p class="lead">言い換えて、見分けて、場面で使う。1回10問・ハート3つ。<span class="en">Learn Japanese honorifics: rephrase, identify, and use them in real situations.</span></p>
+  <div class="modes">
+    ${modeCard('learn','📖','var(--surface2)','まなぶ','3つの敬語のちがいと動詞の図鑑','Learn: the 3 types + verb list')}
+    ${modeCard('convert','🔁','var(--son-bg)','言い換えチャレンジ','「見る」を謙譲語にすると？ 4択で答えよう','Rephrase a verb into the target type')}
+    ${modeCard('identify','🔍','var(--ken-bg)','なに語？クイズ','「拝見する」は尊敬語・謙譲語・丁寧語のどれ？','Which type is this word?')}
+    ${modeCard('cases','🎭','var(--tei-bg)','ケーススタディ','上司・お客様・同期…この場面で何を使う？','Situations: who acts, and what do you say?')}
+    ${modeCard('manners','🙇','var(--surface2)','ビジネスマナー','お辞儀・電話・面接のきほん','Bowing, phone & interview manners')}
+  </div>`;
+  tgY.onclick=()=>{S.yomi=!S.yomi;save();paintStats();tgY.setAttribute('aria-pressed',S.yomi);};
+  tgE.onclick=()=>{S.en=!S.en;save();paintStats();tgE.setAttribute('aria-pressed',S.en);};
+  app.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>go(b.dataset.mode));
+  window.scrollTo(0,0);
+}
+function modeCard(id,ic,bg,t,s,en){
+  const best=S.best[id]!=null?`ベスト ${S.best[id]}/10`:'';
+  return `<button class="mode" data-mode="${id}"><span class="ic" style="background:${bg}">${ic}</span>
+    <span><b>${t}</b><small>${s}</small><span class="en">${en}</span></span><span class="lv">${id==='learn'?'':best}</span></button>`;
+}
+function go(m){ if(m==='learn') learn(); else startRound(m); }
+
+/* =========================================================
+   画面：まなぶ
+   ========================================================= */
+function learn(){
+  hideSheet();
+  app.innerHTML=`
+  <div class="qtop"><button class="x" id="back" aria-label="戻る">←</button><b>まなぶ</b></div>
+  <h2 style="margin-top:4px">3つの敬語</h2>
+  <div class="trio">
+    ${['son','ken','tei'].map(k=>`<div class="tcard t-${k}"><div class="arrow">${TYPES[k].arrow}</div><b>${TYPES[k].ja}</b>
+      <span class="en">${TYPES[k].en} (${TYPES[k].ro})</span><p>${TYPES[k].desc}</p><span class="en">${TYPES[k].enDesc}</span></div>`).join('')}
+  </div>
+  <div class="tip"><b class="h">🧭 迷ったら「だれの動作？」</b>
+    相手（目上・お客様）の動作 → ${T('son')}<br>自分・身内の動作 → ${T('ken')}<br>どちらでもない／対等な相手 → ${T('tei')}（です・ます）
+    <span class="en">Ask “whose action is it?” Theirs → respectful. Yours → humble. Neutral → polite.</span></div>
+  <div class="tip"><b class="h">🏠 ウチとソト</b>社外の人と話すとき、自分の会社の人は上司でも「身内」。<br>×「山田部長はいらっしゃいません」→ ○「山田は席を外しております」</div>
+  <div class="tip"><b class="h">⚠️ 二重敬語に注意</b>×「お越しになられました」→ ○「お越しになりました」<br>×「おっしゃられました」→ ○「おっしゃいました」</div>
+  <div class="tip"><b class="h">🛋️ クッション言葉</b>頼む：「お忙しいところ恐れ入りますが」「お手数をおかけいたしますが」<br>断る：「大変申し訳ありませんが」「せっかくですが」<br>その他：「失礼ですが」「よろしければ」</div>
+
+  <h2>動詞図鑑 <small style="color:var(--muted);font-weight:400;font-size:13px">タップで開く・🔊で読み上げ</small></h2>
+  <input class="search" id="q" placeholder="さがす（例：見る、いく、eat）">
+  <div id="list"></div>
+  <h2>呼び方</h2>
+  <div class="vrow open"><div class="vbody">
+    ${NOUNS.map(([b,en,son,ken])=>`<div style="font-weight:800">${b} <span class="mean">${en}</span></div>
+      <div class="vcell t-son"><span class="lab">相手側</span><span>${son}</span></div>
+      <div class="vcell t-ken"><span class="lab">自分側</span><span>${ken}</span></div>`).join('')}
+  </div></div>`;
+  back.onclick=home;
+  const render=(f='')=>{
+    f=f.trim().toLowerCase();
+    $('#list').innerHTML=VERBS.filter(v=>!f||[v.base,v.yomi,v.en,...v.son,...v.ken,...v.tei].some(s=>s.toLowerCase().includes(f))).map(v=>`
+      <div class="vrow"><button class="vh"><span class="base">${v.base}</span><span class="mean">${v.yomi}・${v.en}</span><span class="chev">›</span></button>
+        <div class="vbody">${['son','ken','tei'].map(k=>`<div class="vcell t-${k}"><span class="lab">${TYPES[k].ja}</span>
+          <span class="words">${v[k].map(x=>`<button class="word" data-say="${x}">${w(x)}</button>`).join('')}</span></div>`).join('')}
+          ${v.note?`<p class="note">💡 ${v.note}</p>`:''}</div></div>`).join('') || '<p class="lead">見つかりませんでした</p>';
+    $('#list').querySelectorAll('.vh').forEach(b=>b.onclick=()=>b.parentElement.classList.toggle('open'));
+  };
+  render(); $('#q').oninput=e=>render(e.target.value);
+  window.scrollTo(0,0);
+}
+
+/* =========================================================
+   問題生成
+   ========================================================= */
+function genConvert(){
+  return shuffle(VERBS).slice(0,10).map(v=>{
+    const k=pick(['son','ken','son','ken','tei']);
+    const ans=pick(v[k]);
+    const others=['son','ken','tei'].filter(x=>x!==k).map(x=>v[x][0]);
+    let extra;
+    const traps=(TRAPS[v.base]||[]);
+    if(k!=='tei' && traps.length) extra=pick(traps);
+    else if(k==='tei') extra=v.base;
+    else extra=pick(VERBS.filter(o=>o!==v).flatMap(o=>o[k]).filter(x=>!v[k].includes(x)));
+    const opts=shuffle([...new Set([ans,...others,extra])]).map(x=>({label:w(x),val:x,say:x}));
+    return {
+      head:`<div class="qlabel">言い換えよう</div>`,
+      prompt:`<span class="big">${v.base}</span><span class="en">${v.en}</span><br>を ${T(k)} にすると？`,
+      opts, check:x=>v[k].includes(x), answer:ans, say:ans, key:v.base,
+      explain:(x)=>{
+        let h = x && !v[k].includes(x) ? (traps.includes(x)?trapWhy(x)+'<br>' : x===v.base?`「${x}」は普通の言い方（敬語ではありません）。<br>`
+               : typeOf(x)?`「${x}」は${T(typeOf(x))}です。<br>`:'') : '';
+        return h+['son','ken','tei'].map(t=>`${T(t)} ${v[t].join('、')}`).join('<br>')+(v.note?`<br>💡 ${v.note}`:'');
+      }
+    };
+  });
+}
+function genIdentify(){
+  const pool=VERBS.flatMap(v=>['son','ken','tei'].flatMap(k=>v[k].map(x=>({x,k,v}))));
+  const seen=new Set();
+  return shuffle(pool).filter(p=>!seen.has(p.x)&&seen.add(p.x)).slice(0,10).map(({x,k,v})=>({
+    head:`<div class="qlabel">これは何語？</div>`,
+    prompt:`<span class="big">${w(x)}</span> ${spk(x)}`,
+    opts:['son','ken','tei'].map(t=>({label:`${TYPES[t].ja}<small>${TYPES[t].who}</small>`,val:t,cls:`typebtn t-${t}`})),
+    typeRow:true, check:t=>t===k, answer:TYPES[k].ja, say:x, key:v.base,
+    explain:()=>`「${x}」は「${v.base}」の${T(k)}。<br>${TYPES[k].arrow} ${TYPES[k].desc}`
+  }));
+}
+function sceneHtml(c){
+  return `<div class="scene"><div class="place">${c.place}</div>
+    <div class="people">${c.people.map(([e,n,r])=>`<span class="person"><span class="em">${e}</span><span>${n}<small>${r}</small></span></span>`).join('')}</div>
+    <div>${c.sit}</div><span class="en">${c.en}</span></div>`;
+}
+function genCases(){
+  const two=shuffle(CASES.filter(c=>c.type)).slice(0,4), one=shuffle(CASES.filter(c=>!c.type)).slice(0,2);
+  const qs=[];
+  shuffle([...two,...one]).forEach(c=>{
+    if(c.type) qs.push({
+      head:sceneHtml(c)+`<div class="qlabel">STEP 1 ／ どの敬語？</div>`,
+      prompt:c.q, opts:['son','ken','tei'].map(t=>({label:`${TYPES[t].ja}<small>${TYPES[t].who}</small>`,val:t,cls:`typebtn t-${t}`})),
+      typeRow:true, check:t=>t===c.type, answer:TYPES[c.type].ja, explain:()=>c.typeWhy, key:'case'
+    });
+    qs.push({
+      head:sceneHtml(c)+`<div class="qlabel">${c.type?'STEP 2 ／ 正しい言い方は？':'どう言う？'}</div>`,
+      prompt:c.type?'正しい言い方はどれ？':c.q,
+      opts:shuffle(c.opts.map(o=>({label:o,val:o,say:o}))), check:x=>x===c.opts[0], answer:c.opts[0], say:c.opts[0],
+      explain:()=>c.why, key:'case'
+    });
+  });
+  return qs.slice(0,10);
+}
+function genManners(){
+  return shuffle(MANNERS).slice(0,10).map(m=>({
+    head:`<div class="qlabel">ビジネスマナー</div>`, prompt:m.q,
+    opts:shuffle(m.opts.map(o=>({label:o,val:o}))), check:x=>x===m.opts[0], answer:m.opts[0], explain:()=>m.why, key:'manner'
+  }));
+}
+const GEN={convert:genConvert,identify:genIdentify,cases:genCases,manners:genManners};
+const TITLES={convert:'言い換えチャレンジ',identify:'なに語？クイズ',cases:'ケーススタディ',manners:'ビジネスマナー'};
+
+/* =========================================================
+   クイズエンジン
+   ========================================================= */
+let R=null;
+function startRound(mode){
+  touchStreak();
+  R={mode,qs:GEN[mode](),i:0,hearts:3,combo:0,ok:0,xp:0,miss:[]};
+  showQ();
+}
+function showQ(){
+  hideSheet();
+  const q=R.qs[R.i];
+  app.innerHTML=`
+  <div class="qtop"><button class="x" id="quit" aria-label="やめる">✕</button>
+    <div class="bar"><i style="width:${R.i/R.qs.length*100}%"></i></div>
+    <span class="hearts">${'❤️'.repeat(R.hearts)}${'🤍'.repeat(3-R.hearts)}</span></div>
+  <div class="combo">${R.combo>=2?`🔥 ${R.combo} コンボ！`:''}</div>
+  ${q.head}
+  <div class="prompt">${q.prompt}</div>
+  <div class="opts" ${q.typeRow?'style="grid-template-columns:repeat(3,1fr)"':''}>
+    ${q.opts.map((o,i)=>`<button class="opt ${o.cls||''}" data-i="${i}">${q.typeRow?'':`<span class="k">${i+1}</span>`}<span>${o.label}</span></button>`).join('')}
+  </div>`;
+  quit.onclick=()=>{ if(confirm('このラウンドをやめますか？')) home(); };
+  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(+b.dataset.i));
+  window.scrollTo(0,0);
+}
+function answer(i){
+  const q=R.qs[R.i], o=q.opts[i], ok=q.check(o.val);
+  const btns=[...app.querySelectorAll('.opt')];
+  btns.forEach((b,j)=>{b.disabled=true; if(q.check(q.opts[j].val)) b.classList.add('sel-ok'); else if(j!==i) b.classList.add('dim');});
+  if(!ok) btns[i].classList.add('sel-ng');
+  beep(ok);
+  if(ok){ R.ok++; R.combo++; const g=10+Math.min(R.combo-1,5)*2; R.xp+=g; }
+  else { R.combo=0; R.hearts--; R.miss.push({q,picked:o}); }
+  const last = R.i===R.qs.length-1 || R.hearts<=0;
+  sheet.className='sheet show '+(ok?'ok':'ng');
+  sheetIn.innerHTML=`<h3>${ok?pick(['正解！','すばらしい！','完璧！','その通り！']):'おしい！'}</h3>
+    <div class="ans">正解：${q.answer.length<12?w(q.answer):q.answer} ${q.say?spk(q.say):''}</div>
+    <p class="exp">${q.explain(ok?null:o.val)}</p>
+    <button class="btn" id="next">${last?'結果を見る':'つぎへ'}</button>`;
+  next.onclick=()=>{ if(last) finish(); else {R.i++; showQ();} };
+  app.style.paddingBottom=(sheetIn.offsetHeight+24)+'px';
+  next.focus();
+}
+function finish(){
+  hideSheet();
+  const n=R.qs.length, cleared=R.hearts>0;
+  if(cleared && R.ok===n) R.xp+=20;
+  S.xp+=R.xp; S.best[R.mode]=Math.max(S.best[R.mode]||0,R.ok); save(); paintStats();
+  const pct=R.ok/n;
+  app.innerHTML=`<div class="result">
+    <div class="trophy">${!cleared?'💔':pct===1?'🏆':pct>=.7?'🎉':'🌱'}</div>
+    <h1>${!cleared?'ハートがなくなった…':pct===1?'パーフェクト！':pct>=.7?'よくできました！':'おつかれさま！'}</h1>
+    <p class="lead">${TITLES[R.mode]}</p>
+    <div class="score"><div><b>${R.ok}/${n}</b><small>正解</small></div><div><b>+${R.xp}</b><small>XP</small></div><div><b>Lv${level()}</b><small>レベル</small></div></div>
+    ${R.miss.length?`<div class="review"><b>まちがえた問題をふりかえろう</b><ul>${R.miss.map(m=>`<li>${m.q.prompt.replace(/<button.*?<\/button>/g,'')}<br>❌ ${m.picked.label}<br>⭕ <b>${m.q.answer}</b></li>`).join('')}</ul></div>`:''}
+    <div class="stack"><button class="btn" id="again">もう一回</button><button class="btn ghost" id="toHome">ホームへ</button></div>
+  </div>`;
+  again.onclick=()=>startRound(R.mode); toHome.onclick=home;
+  if(cleared && pct>=.7) confetti();
+  window.scrollTo(0,0);
+}
+function hideSheet(){ sheet.className='sheet'; sheetIn.innerHTML=''; app.style.paddingBottom=''; }
+function confetti(){
+  const box=document.createElement('div'); box.className='confetti';
+  for(let i=0;i<28;i++){const s=document.createElement('span');s.textContent=pick(['🎉','⭐','🌸','✨','🙇']);
+    s.style.left=Math.random()*100+'%';s.style.animationDelay=Math.random()*.6+'s';box.appendChild(s);}
+  document.body.appendChild(box); setTimeout(()=>box.remove(),2600);
+}
+document.addEventListener('keydown',e=>{
+  if(!R||!app.querySelector('.opt')) return;
+  if(sheet.classList.contains('show')){ if(e.key==='Enter'){e.preventDefault();$('#next')?.click();} return; }
+  const n=+e.key; if(n>=1&&n<=4){ app.querySelectorAll('.opt')[n-1]?.click(); }
+});
+homeBtn.onclick=home;
+paintStats(); home();
+</script>
+</body>
+</html>
