@@ -61,7 +61,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:var(--ok);color:#fff;font-weight:800;border-radius:999px;padding:6px 16px;font-size:14px;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .caption{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);background:rgba(45,42,62,.88);color:#fff;font-weight:800;border-radius:16px;padding:12px 20px;font-size:17px;text-align:center;pointer-events:none;transition:opacity .4s;max-width:86vw;line-height:1.5}
 
-.screen{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:rgba(207,230,242,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.screen{position:fixed;inset:0;display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));background:rgba(207,230,242,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 .card{width:100%;max-width:460px;background:var(--paper);border-radius:24px;padding:22px 20px;box-shadow:0 10px 40px rgba(0,0,0,.15);max-height:calc(100% - 20px);overflow:auto}
 .card h1{font-size:25px;line-height:1.25;margin:4px 0 6px;text-wrap:balance}
 .eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--accent)}
@@ -144,9 +144,8 @@ body.nofuri rt{display:none}
 .pres .btn{margin-top:6px}
 @media (max-width:480px){.trio{grid-template-columns:1fr}.mis{grid-template-columns:1fr}}
 /* キャラ作成：3Dの主人公が見えるよう、背景をぼかさずカードを下（横長なら右）に置く */
-.screen.clear{background:none;backdrop-filter:none;-webkit-backdrop-filter:none;align-items:end;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-.screen.clear .card{max-height:52vh;max-width:460px}
-@media (min-aspect-ratio:1/1){.screen.clear{align-items:center;justify-items:end}.screen.clear .card{max-height:calc(100% - 20px);max-width:400px}}
+/* キャラ作成のプレビュー枠：カードの中に置き、スクロールしても上に貼りつく */
+.preview{position:sticky;top:-22px;z-index:2;display:block;width:100%;height:min(34vh,280px);margin:0 0 14px;border-radius:18px;background:#cfe6f2;box-shadow:0 6px 0 var(--paper),0 -22px 0 var(--paper)}
 .cfield{display:grid;gap:6px;margin:0 0 14px}
 .cfield>span{font-size:13px;font-weight:800;color:var(--muted)}
 .cfield input{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:16px}
@@ -202,7 +201,7 @@ function resize(){
   camera.setViewOffset(w,h,0,h*(portrait()?-0.06:0.02),w,h);
   camera.updateProjectionMatrix();
 }
-addEventListener('resize',()=>{ resize(); if(SPIN) frameHero(); }); resize();
+addEventListener('resize',resize); resize();
 
 scene.add(new THREE.HemisphereLight('#ffffff','#bba98c',0.85));
 const sun=new THREE.DirectionalLight('#fff3e0',0.75); sun.position.set(5,12,8); sun.castShadow=true;
@@ -607,6 +606,7 @@ function loop(now){
   const w=innerWidth,h=innerHeight;
   camera.lookAt(camLook);
   renderer.setScissorTest(false); renderer.setViewport(0,0,w,h); renderer.render(scene,camera);
+  if(SPIN) renderPreview();
   if(pip){
     const r=pipRect(); cam2.aspect=r.w/r.h; cam2.updateProjectionMatrix(); cam2.lookAt(pipLook);
     renderer.setScissorTest(true); renderer.setScissor(r.x,h-r.y-r.h,r.w,r.h); renderer.setViewport(r.x,h-r.y-r.h,r.w,r.h);
@@ -1977,7 +1977,7 @@ function tabs(cur){
     .map(([k,l])=>`<button role="tab" data-tab="${k}" aria-selected="${cur===k}">${t(l)}</button>`).join('')}</div>`;
 }
 function shell(cur,body,wide){
-  screenEl.hidden=false; screenEl.className='screen'+(cur==='char'?' clear':'');
+  screenEl.hidden=false; screenEl.className='screen';
   if(cur!=='char'&&SPIN){ SPIN=false; resize(); titleScene(); }
   screenEl.innerHTML=`<div class="card ${wide?'wide':''}">
     <div class="topline"><div class="eyebrow">STRANGE KEIGO WORLD</div>${toggleRow()}</div>
@@ -2103,7 +2103,7 @@ function charView(then){
   const saveChar=()=>{ store.set('skw-char',JSON.stringify(CHAR)); };
   const draw=()=>{
     const sw=(key,list,color)=>list.map((v,i)=>`<span class="swl"><button class="sw" data-k="${key}" data-i="${i}" aria-pressed="${CHAR[key]===i}" aria-label="${escHTML(L(v[0],v[1]))}" style="background:${color(v,i)}"></button>${v[0]?LR(v[0],v[1]):''}</span>`).join('');
-    shell('char',`${then?`<p class="small">${t('cFirst')}</p>`:''}<h1>${t('cTitle')}</h1>
+    shell('char',`${then?`<p class="small">${t('cFirst')}</p>`:''}<h1>${t('cTitle')}</h1><span id="cPrevSlot"></span>
       <label class="cfield"><span>${t('cName')}</span><input id="cName" maxlength="12" value="${escHTML(CHAR.name)}" autocomplete="off"></label>
       <label class="cfield"><span>${t('cYomi')}</span><input id="cYomi" maxlength="16" value="${escHTML(CHAR.yomi)}" autocomplete="off" lang="ja"></label>
       <div class="cfield"><span>${t('cOutfit')}</span><div class="hairs">${OUTFITS.map(([k,ja,en])=>`<button class="chip" data-outfit="${k}" aria-pressed="${CHAR.outfit===k}">${LR(ja,en)}</button>`).join('')}</div></div>
@@ -2125,21 +2125,24 @@ function charView(then){
     screenEl.querySelectorAll('[data-outfit]').forEach(b=>b.onclick=()=>{ CHAR.outfit=b.dataset.outfit; saveChar(); rebuildHero(); draw(); });
     screenEl.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ CHAR[b.dataset.k]=+b.dataset.i; saveChar(); rebuildHero(); draw(); });
     cStart.onclick=()=>{ saveChar(); SPIN=false; resize(); if(then){ pickVoice(); play(then); } else title(); };
-    requestAnimationFrame(frameHero);
+    screenEl.querySelector('#cPrevSlot').replaceWith(prevCanvas);
   };
   draw(); rerender=draw;
 }
-// メニューのカードに隠れていない場所の真ん中に、主人公の全身が収まるようにカメラを合わせる
-function frameHero(){
-  const card=screenEl.querySelector('.card'); if(!card||!SPIN) return;
-  const r=card.getBoundingClientRect(), W=innerWidth, H=innerHeight;
-  let x0=0, y0=58, x1=W, y1=H;
-  if(r.left>W*0.3) x1=r.left-8; else y1=r.top-8;
-  const rw=Math.max(x1-x0,80), rh=Math.max(y1-y0,80), cx=(x0+x1)/2, cy=(y0+y1)/2;
-  camera.aspect=W/H; const tanH=Math.tan(camera.fov*Math.PI/360);
-  const d=Math.max(2.15*H/(rh*2*tanH), 1.1*W/(rw*2*tanH*camera.aspect));
-  camera.setViewOffset(W,H,W/2-cx,H/2-cy,W,H); camera.updateProjectionMatrix();
-  camera.position.set(0,0.95,2.4+d); camLook.set(0,0.88,2.4);
+// キャラ作成のプレビュー：カードの中の枠に、もう一つのレンダラーで主人公だけを写す
+const prevCanvas=document.createElement('canvas'); prevCanvas.className='preview'; prevCanvas.setAttribute('aria-hidden','true');
+const heroCam=new THREE.PerspectiveCamera(32,1,0.1,60);
+let prevR=null;
+function renderPreview(){
+  if(!prevCanvas.isConnected) return;
+  const w=prevCanvas.clientWidth, h=prevCanvas.clientHeight; if(!w||!h) return;
+  if(!prevR){ prevR=new THREE.WebGLRenderer({canvas:prevCanvas,antialias:true}); prevR.shadowMap.enabled=true; prevR.shadowMap.type=THREE.PCFSoftShadowMap; }
+  prevR.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); prevR.setSize(w,h,false);
+  heroCam.aspect=w/h; heroCam.updateProjectionMatrix();
+  // 全身（約2.1）が縦に、肩幅（約1.0）が横に収まる距離
+  const tan=Math.tan(heroCam.fov*Math.PI/360), d=Math.max(2.1/(2*tan),1.0/(2*tan*heroCam.aspect));
+  heroCam.position.set(0,1.05,2.4+d); heroCam.lookAt(0,0.9,2.4);
+  prevR.render(scene,heroCam);
 }
 const VIEWS={sim:title,char:()=>charView(),basics,words,practice};
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-say]'); if(b){ e.stopPropagation(); try{speechSynthesis.cancel();}catch(_){} tts(b.dataset.say,1); } });
