@@ -145,7 +145,7 @@ body.nofuri rt{display:none}
 @media (max-width:480px){.trio{grid-template-columns:1fr}.mis{grid-template-columns:1fr}}
 /* キャラ作成：3Dの主人公が見えるよう、背景をぼかさずカードを下（横長なら右）に置く */
 /* キャラ作成のプレビュー枠：カードの中に置き、スクロールしても上に貼りつく */
-.preview{position:sticky;top:-22px;z-index:2;display:block;width:100%;height:min(34vh,280px);margin:0 0 14px;border-radius:18px;background:#cfe6f2;box-shadow:0 6px 0 var(--paper),0 -22px 0 var(--paper)}
+.preview{position:sticky;top:-22px;z-index:2;display:block;width:100%;height:min(34vh,280px);margin:0 0 14px;border-radius:18px;background:#cfe6f2;box-shadow:0 8px 0 var(--paper)}
 .cfield{display:grid;gap:6px;margin:0 0 14px}
 .cfield>span{font-size:13px;font-weight:800;color:var(--muted)}
 .cfield input{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:16px}
@@ -2103,6 +2103,7 @@ function charView(then){
   const saveChar=()=>{ store.set('skw-char',JSON.stringify(CHAR)); };
   const draw=()=>{
     const sw=(key,list,color)=>list.map((v,i)=>`<span class="swl"><button class="sw" data-k="${key}" data-i="${i}" aria-pressed="${CHAR[key]===i}" aria-label="${escHTML(L(v[0],v[1]))}" style="background:${color(v,i)}"></button>${v[0]?LR(v[0],v[1]):''}</span>`).join('');
+    const keep=screenEl.querySelector('.card')?.scrollTop||0;
     shell('char',`${then?`<p class="small">${t('cFirst')}</p>`:''}<h1>${t('cTitle')}</h1><span id="cPrevSlot"></span>
       <label class="cfield"><span>${t('cName')}</span><input id="cName" maxlength="12" value="${escHTML(CHAR.name)}" autocomplete="off"></label>
       <label class="cfield"><span>${t('cYomi')}</span><input id="cYomi" maxlength="16" value="${escHTML(CHAR.yomi)}" autocomplete="off" lang="ja"></label>
@@ -2126,6 +2127,7 @@ function charView(then){
     screenEl.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{ CHAR[b.dataset.k]=+b.dataset.i; saveChar(); rebuildHero(); draw(); });
     cStart.onclick=()=>{ saveChar(); SPIN=false; resize(); if(then){ pickVoice(); play(then); } else title(); };
     screenEl.querySelector('#cPrevSlot').replaceWith(prevCanvas);
+    screenEl.querySelector('.card').scrollTop=keep;
   };
   draw(); rerender=draw;
 }
@@ -2140,8 +2142,8 @@ function renderPreview(){
   prevR.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); prevR.setSize(w,h,false);
   heroCam.aspect=w/h; heroCam.updateProjectionMatrix();
   // 全身（約2.1）が縦に、肩幅（約1.0）が横に収まる距離
-  const tan=Math.tan(heroCam.fov*Math.PI/360), d=Math.max(2.1/(2*tan),1.0/(2*tan*heroCam.aspect));
-  heroCam.position.set(0,1.05,2.4+d); heroCam.lookAt(0,0.9,2.4);
+  const tan=Math.tan(heroCam.fov*Math.PI/360), d=Math.max(2.45/(2*tan),1.1/(2*tan*heroCam.aspect));
+  heroCam.position.set(0,1.05,2.4+d); heroCam.lookAt(0,0.92,2.4);
   prevR.render(scene,heroCam);
 }
 const VIEWS={sim:title,char:()=>charView(),basics,words,practice};
